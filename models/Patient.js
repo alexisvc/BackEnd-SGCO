@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+const mongoose = require('mongoose')
 
 const patientSchema = new mongoose.Schema({
   nombrePaciente: {
@@ -52,16 +52,16 @@ const patientSchema = new mongoose.Schema({
       ref: 'MedicalRecord'
     }
   ]
-});
+})
 
 patientSchema.set('toJSON', {
   transform: (document, returnedObject) => {
-    returnedObject.id = returnedObject._id.toString();
-    delete returnedObject._id;
-    delete returnedObject.__v;
+    returnedObject.id = returnedObject._id.toString()
+    delete returnedObject._id
+    delete returnedObject.__v
   }
-});
+})
 
-const Patient = mongoose.model('Patient', patientSchema);
+const Patient = mongoose.model('Patient', patientSchema)
 
-module.exports = Patient;
+module.exports = Patient

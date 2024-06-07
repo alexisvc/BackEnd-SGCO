@@ -1,3 +1,4 @@
+// medicalRecordsController.js
 const express = require('express')
 const medicalRecordsRouter = express.Router()
 const MedicalRecord = require('../models/MedicalRecord')
@@ -6,7 +7,7 @@ const Patient = require('../models/Patient')
 // Ruta para obtener todas las historias clínicas
 medicalRecordsRouter.get('/', async (req, res) => {
   try {
-    const medicalRecords = await MedicalRecord.find().populate('patient')
+    const medicalRecords = await MedicalRecord.find().populate('paciente')
     res.json(medicalRecords)
   } catch (error) {
     res.status(500).json({ error: 'Internal Server Error' })
@@ -17,7 +18,7 @@ medicalRecordsRouter.get('/', async (req, res) => {
 medicalRecordsRouter.get('/:id', async (req, res) => {
   try {
     const medicalRecordId = req.params.id
-    const medicalRecord = await MedicalRecord.findById(medicalRecordId).populate('patient')
+    const medicalRecord = await MedicalRecord.findById(medicalRecordId).populate('paciente')
 
     if (!medicalRecord) {
       return res.status(404).json({ error: 'Medical record not found' })
@@ -33,7 +34,7 @@ medicalRecordsRouter.get('/:id', async (req, res) => {
 medicalRecordsRouter.get('/patient/:patientId', async (req, res) => {
   try {
     const patientId = req.params.patientId
-    const medicalRecords = await MedicalRecord.find({ patient: patientId }).populate('patient')
+    const medicalRecords = await MedicalRecord.find({ paciente: patientId }).populate('paciente')
 
     res.json(medicalRecords)
   } catch (error) {
@@ -44,13 +45,13 @@ medicalRecordsRouter.get('/patient/:patientId', async (req, res) => {
 // Ruta para registrar una nueva historia clínica
 medicalRecordsRouter.post('/', async (req, res) => {
   try {
-    const { date, description, patientId } = req.body
+    const { date, description, paciente, ...medicalRecordData } = req.body
 
-    if (!date || !description || !patientId) {
+    if (!date || !description || !paciente) {
       return res.status(400).json({ error: 'All fields are required' })
     }
 
-    const patient = await Patient.findById(patientId)
+    const patient = await Patient.findById(paciente)
     if (!patient) {
       return res.status(404).json({ error: 'Patient not found' })
     }
@@ -58,7 +59,8 @@ medicalRecordsRouter.post('/', async (req, res) => {
     const medicalRecord = new MedicalRecord({
       date,
       description,
-      patient: patientId
+      paciente,
+      ...medicalRecordData
     })
 
     const savedMedicalRecord = await medicalRecord.save()
@@ -72,7 +74,7 @@ medicalRecordsRouter.post('/', async (req, res) => {
 medicalRecordsRouter.put('/:id', async (req, res) => {
   try {
     const medicalRecordId = req.params.id
-    const { date, description } = req.body
+    const { date, description, ...medicalRecordData } = req.body
 
     const existingMedicalRecord = await MedicalRecord.findById(medicalRecordId)
     if (!existingMedicalRecord) {
@@ -81,6 +83,7 @@ medicalRecordsRouter.put('/:id', async (req, res) => {
 
     if (date) existingMedicalRecord.date = date
     if (description) existingMedicalRecord.description = description
+    Object.assign(existingMedicalRecord, medicalRecordData)
 
     const updatedMedicalRecord = await existingMedicalRecord.save()
     res.json(updatedMedicalRecord)
