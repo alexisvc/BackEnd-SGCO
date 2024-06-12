@@ -1,4 +1,3 @@
-// medicalRecord.js
 const mongoose = require('mongoose')
 
 const medicalRecordSchema = new mongoose.Schema({
@@ -14,7 +13,8 @@ const medicalRecordSchema = new mongoose.Schema({
   paciente: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Patient',
-    required: true
+    required: true,
+    unique: true // Asegura que cada paciente tenga una única historia clínica
   },
   motivoConsulta: String,
   expectativaPaciente: String,

@@ -1,4 +1,3 @@
-// medicalRecordsController.js
 const express = require('express')
 const medicalRecordsRouter = express.Router()
 const MedicalRecord = require('../models/MedicalRecord')
@@ -34,9 +33,13 @@ medicalRecordsRouter.get('/:id', async (req, res) => {
 medicalRecordsRouter.get('/patient/:patientId', async (req, res) => {
   try {
     const patientId = req.params.patientId
-    const medicalRecords = await MedicalRecord.find({ paciente: patientId }).populate('paciente')
+    const medicalRecord = await MedicalRecord.findOne({ paciente: patientId }).populate('paciente')
 
-    res.json(medicalRecords)
+    if (!medicalRecord) {
+      return res.status(404).json({ error: 'Medical record not found for this patient' })
+    }
+
+    res.json(medicalRecord)
   } catch (error) {
     res.status(500).json({ error: 'Internal Server Error' })
   }
@@ -56,6 +59,11 @@ medicalRecordsRouter.post('/', async (req, res) => {
       return res.status(404).json({ error: 'Patient not found' })
     }
 
+    const existingMedicalRecord = await MedicalRecord.findOne({ paciente })
+    if (existingMedicalRecord) {
+      return res.status(400).json({ error: 'Patient already has a medical record' })
+    }
+
     const medicalRecord = new MedicalRecord({
       date,
       description,
@@ -64,6 +72,9 @@ medicalRecordsRouter.post('/', async (req, res) => {
     })
 
     const savedMedicalRecord = await medicalRecord.save()
+    patient.historiaClinica = savedMedicalRecord._id
+    await patient.save()
+
     res.json(savedMedicalRecord)
   } catch (error) {
     res.status(500).json({ error: 'Internal Server Error' })
@@ -100,6 +111,12 @@ medicalRecordsRouter.delete('/:id', async (req, res) => {
 
     if (!deletedMedicalRecord) {
       return res.status(404).json({ error: 'Medical record not found' })
+    }
+
+    const patient = await Patient.findById(deletedMedicalRecord.paciente)
+    if (patient) {
+      patient.historiaClinica = null
+      await patient.save()
     }
 
     res.status(204).end()

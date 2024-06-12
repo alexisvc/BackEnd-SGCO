@@ -23,12 +23,12 @@ const patientSchema = new mongoose.Schema({
   },
   generoPaciente: {
     type: String,
-    enum: ['male', 'female', 'other'],
     required: true
   },
   numeroCedula: {
     type: String,
-    required: true
+    required: true,
+    unique: true
   },
   ocupacion: {
     type: String,
@@ -46,12 +46,10 @@ const patientSchema = new mongoose.Schema({
     type: String,
     required: true
   },
-  medicalRecords: [
-    {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'MedicalRecord'
-    }
-  ]
+  historiaClinica: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'MedicalRecord'
+  }
 })
 
 patientSchema.set('toJSON', {

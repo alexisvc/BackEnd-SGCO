@@ -5,7 +5,7 @@ const Patient = require('../models/Patient')
 // Ruta para obtener todos los pacientes
 patientsRouter.get('/', async (req, res) => {
   try {
-    const patients = await Patient.find().populate('medicalRecords')
+    const patients = await Patient.find()
     res.json(patients)
   } catch (error) {
     res.status(500).json({ error: 'Internal Server Error' })
