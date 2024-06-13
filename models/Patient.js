@@ -49,7 +49,17 @@ const patientSchema = new mongoose.Schema({
   historiaClinica: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'MedicalRecord'
-  }
+  },
+  treatmentPlans: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'TreatmentPlan'
+    }
+  ],
+  evolutionCharts: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'EvolutionChart'
+  }]
 })
 
 patientSchema.set('toJSON', {
