@@ -30,16 +30,16 @@ treatmentPlansRouter.get('/:id', async (req, res) => {
 })
 // Route to get treatments by patientId
 treatmentPlansRouter.get('/patient/:patientId', async (req, res) => {
-    const { patientId } = req.params;
-  
-    try {
-      const treatments = await TreatmentPlan.find({ paciente: patientId }).populate('paciente', { nombrePaciente: 1, numeroCedula: 1 });
-      res.json(treatments);
-    } catch (error) {
-      console.error(error);
-      res.status(500).json({ error: 'Internal Server Error' });
-    }
-  });
+  const { patientId } = req.params
+
+  try {
+    const treatments = await TreatmentPlan.find({ paciente: patientId }).populate('paciente', { nombrePaciente: 1, numeroCedula: 1 })
+    res.json(treatments)
+  } catch (error) {
+    console.error(error)
+    res.status(500).json({ error: 'Internal Server Error' })
+  }
+})
 
 // Route to create a new treatment plan
 treatmentPlansRouter.post('/', async (req, res) => {

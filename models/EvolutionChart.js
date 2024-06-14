@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+const mongoose = require('mongoose')
 
 const evolutionChartSchema = new mongoose.Schema({
   fechaCuadEvol: {
@@ -26,16 +26,16 @@ const evolutionChartSchema = new mongoose.Schema({
     ref: 'Patient',
     required: true
   }
-});
+})
 
 evolutionChartSchema.set('toJSON', {
   transform: (document, returnedObject) => {
-    returnedObject.id = returnedObject._id.toString();
-    delete returnedObject._id;
-    delete returnedObject.__v;
+    returnedObject.id = returnedObject._id.toString()
+    delete returnedObject._id
+    delete returnedObject.__v
   }
-});
+})
 
-const EvolutionChart = mongoose.model('EvolutionChart', evolutionChartSchema);
+const EvolutionChart = mongoose.model('EvolutionChart', evolutionChartSchema)
 
-module.exports = EvolutionChart;
+module.exports = EvolutionChart

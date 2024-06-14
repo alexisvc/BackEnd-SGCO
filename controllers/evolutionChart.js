@@ -29,6 +29,18 @@ evolutionChartsRouter.get('/:id', async (req, res) => {
   }
 });
 
+// Route to get evolution charts by patient ID
+evolutionChartsRouter.get('/patient/:patientId', async (req, res) => {
+  try {
+    const patientId = req.params.patientId;
+    const evolutionCharts = await EvolutionChart.find({ paciente: patientId }).populate('paciente', { nombrePaciente: 1, numeroCedula: 1 });
+    res.json(evolutionCharts);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
 // Route to create a new evolution chart
 evolutionChartsRouter.post('/', async (req, res) => {
   try {

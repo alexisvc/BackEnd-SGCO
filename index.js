@@ -13,8 +13,7 @@ const patientsRouter = require('./controllers/patients')
 const medicalRecordsRouter = require('./controllers/medicalRecords')
 const loginRouter = require('./controllers/login')
 const treatmentPlansRouter = require('./controllers/treatmentPlan')
-const evolutionChartsRouter = require('./controllers/evolutionChart');
-
+const evolutionChartsRouter = require('./controllers/evolutionChart')
 
 app.use(cors())
 app.use(express.json())
@@ -34,7 +33,7 @@ app.use('/api/login', loginRouter)
 // Rutas para planes de tratamiento
 app.use('/api/treatment-plans', treatmentPlansRouter)
 // Rutras para cuadros de evolución
-app.use('/api/evolution-charts', evolutionChartsRouter);
+app.use('/api/evolution-charts', evolutionChartsRouter)
 
 // Middleware para manejar errores 404
 app.use(notFound)
