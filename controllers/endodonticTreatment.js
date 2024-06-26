@@ -44,7 +44,6 @@ endodonticTreatmentRouter.get('/patient/:patientId', async (req, res) => {
   }
 });
 
-
 // Route to create a new endodontic treatment
 endodonticTreatmentRouter.post('/', async (req, res) => {
   try {
@@ -56,21 +55,15 @@ endodonticTreatmentRouter.post('/', async (req, res) => {
       return res.status(400).json({ error: 'Patient not found' });
     }
 
-    // Check if the patient already has an endodontic treatment record
-    const existingTreatment = await EndodonticTreatment.findOne({ paciente });
-    if (existingTreatment) {
-      return res.status(400).json({ error: 'Patient already has an endodontic treatment' });
-    }
-
     const endodonticTreatment = new EndodonticTreatment({
-      paciente,
-      ...endodonticTreatmentData
+      ...endodonticTreatmentData,
+      paciente
     });
 
     const savedEndodonticTreatment = await endodonticTreatment.save();
 
     // Add the endodontic treatment reference to the patient
-    existingPatient.endodoncia = savedEndodonticTreatment._id;
+    existingPatient.endodoncia.push(savedEndodonticTreatment._id);
     await existingPatient.save();
 
     res.status(201).json(savedEndodonticTreatment);
@@ -87,13 +80,16 @@ endodonticTreatmentRouter.put('/:id', async (req, res) => {
     const { paciente, ...endodonticTreatmentData } = req.body;
 
     // Validate that the patient exists if updating the patient field
+    let existingPatient = null; // Define existingPatient here
+
     if (paciente) {
-      const existingPatient = await Patient.findById(paciente);
+      existingPatient = await Patient.findById(paciente);
       if (!existingPatient) {
         return res.status(400).json({ error: 'Patient not found' });
       }
     }
 
+    // Update the endodontic treatment
     const updatedEndodonticTreatment = await EndodonticTreatment.findByIdAndUpdate(
       endodonticTreatmentId,
       { paciente, ...endodonticTreatmentData },
@@ -104,6 +100,19 @@ endodonticTreatmentRouter.put('/:id', async (req, res) => {
       return res.status(404).json({ error: 'Endodontic treatment not found' });
     }
 
+    // Update patient's endodoncia reference if patient field is updated
+    if (paciente) {
+      // Remove previous reference from old patient's endodoncia
+      await Patient.findByIdAndUpdate(updatedEndodonticTreatment.paciente, {
+        $pull: { endodoncia: endodonticTreatmentId }
+      });
+
+      // Add updated reference to new patient's endodoncia
+      existingPatient.endodoncia.push(updatedEndodonticTreatment._id);
+      await existingPatient.save();
+    }
+
+    // Return the updated endodontic treatment
     res.json(updatedEndodonticTreatment);
   } catch (error) {
     console.error(error);
@@ -121,11 +130,10 @@ endodonticTreatmentRouter.delete('/:id', async (req, res) => {
       return res.status(404).json({ error: 'Endodontic treatment not found' });
     }
 
-    const patient = await Patient.findById(endodonticTreatment.paciente);
-    if (patient) {
-      patient.endodoncia = null;
-      await patient.save();
-    }
+    // Remove reference from patient's endodoncia array
+    await Patient.findByIdAndUpdate(endodonticTreatment.paciente, {
+      $pull: { endodoncia: endodonticTreatmentId }
+    });
 
     await EndodonticTreatment.findByIdAndDelete(endodonticTreatmentId);
 

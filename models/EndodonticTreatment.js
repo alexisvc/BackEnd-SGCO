@@ -80,7 +80,7 @@ const endodonticTreatmentSchema = new mongoose.Schema({
   paciente: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Patient',
-    unique: true
+    required: true
   }
 });
 

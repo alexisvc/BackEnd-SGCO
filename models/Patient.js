@@ -58,10 +58,10 @@ const patientSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'EvolutionChart'
   }],
-  endodoncia: {
+  endodoncia: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'EndodonticTreatment'
-  }
+  }]
 });
 
 patientSchema.set('toJSON', {
