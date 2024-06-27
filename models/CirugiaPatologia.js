@@ -1,29 +1,29 @@
-const mongoose = require('mongoose');
+const mongoose = require('mongoose')
 
 const cirugiaPatologiaSchema = new mongoose.Schema({
   antecedentesCirPat: {
     type: String,
-    required: true,
+    required: true
   },
   alergiasMedCirPat: {
     type: String,
-    required: true,
+    required: true
   },
   patologiaTejBland: {
     type: String,
-    required: true,
+    required: true
   },
   patologiaTejDuros: {
     type: String,
-    required: true,
+    required: true
   },
   diagRadiografico: {
     type: String,
-    required: true,
+    required: true
   },
   localizacionPatologia: {
     type: String,
-    required: true,
+    required: true
   },
   paciente: {
     type: mongoose.Schema.Types.ObjectId,
@@ -31,16 +31,16 @@ const cirugiaPatologiaSchema = new mongoose.Schema({
     required: true,
     unique: true // Ensure unique reference per patient
   }
-});
+})
 
 cirugiaPatologiaSchema.set('toJSON', {
   transform: (document, returnedObject) => {
-    returnedObject.id = returnedObject._id.toString();
-    delete returnedObject._id;
-    delete returnedObject.__v;
+    returnedObject.id = returnedObject._id.toString()
+    delete returnedObject._id
+    delete returnedObject.__v
   }
-});
+})
 
-const CirugiaPatologia = mongoose.model('CirugiaPatologia', cirugiaPatologiaSchema);
+const CirugiaPatologia = mongoose.model('CirugiaPatologia', cirugiaPatologiaSchema)
 
-module.exports = CirugiaPatologia;
+module.exports = CirugiaPatologia

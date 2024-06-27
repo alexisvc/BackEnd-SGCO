@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+const mongoose = require('mongoose')
 
 const endodonticTreatmentSchema = new mongoose.Schema({
   dienteEnd: {
@@ -82,16 +82,16 @@ const endodonticTreatmentSchema = new mongoose.Schema({
     ref: 'Patient',
     required: true
   }
-});
+})
 
 endodonticTreatmentSchema.set('toJSON', {
   transform: (document, returnedObject) => {
-    returnedObject.id = returnedObject._id.toString();
-    delete returnedObject._id;
-    delete returnedObject.__v;
+    returnedObject.id = returnedObject._id.toString()
+    delete returnedObject._id
+    delete returnedObject.__v
   }
-});
+})
 
-const EndodonticTreatment = mongoose.model('EndodonticTreatment', endodonticTreatmentSchema);
+const EndodonticTreatment = mongoose.model('EndodonticTreatment', endodonticTreatmentSchema)
 
-module.exports = EndodonticTreatment;
+module.exports = EndodonticTreatment
