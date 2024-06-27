@@ -33,30 +33,14 @@ const endodonticTreatmentSchema = new mongoose.Schema({
     type: String,
     trim: true
   },
-  etiologia: {
-    type: Boolean
-  },
-  dolor: {
-    type: Boolean
-  },
-  pruebasClinicas: {
-    type: Boolean
-  },
-  pruebasVitalidad: {
-    type: Boolean
-  },
-  camaraPulpar: {
-    type: Boolean
-  },
-  conductosRadiculares: {
-    type: Boolean
-  },
-  foramen: {
-    type: Boolean
-  },
-  ligamentoPeriodontal: {
-    type: Boolean
-  },
+  etiologia: [String],
+  dolor: [String],
+  pruebasClinicas: [String],
+  pruebasVitalidad: [String],
+  camaraPulpar: [String],
+  conductosRadiculares: [String],
+  foramen: [String],
+  ligamentoPeriodontal: [String],
   otrosHallazgos: {
     type: String,
     trim: true
