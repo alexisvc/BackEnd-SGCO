@@ -61,7 +61,11 @@ const patientSchema = new mongoose.Schema({
   endodoncia: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'EndodonticTreatment'
-  }]
+  }],
+  cirugiaPatologia: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'CirugiaPatologia'
+  }
 });
 
 patientSchema.set('toJSON', {
