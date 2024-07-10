@@ -87,11 +87,6 @@ ortodonciaRouter.put('/:id', async (req, res) => {
     const ortodonciaId = req.params.id
     const { paciente, ...ortodonciaData } = req.body
 
-    // Validar si se proporcionó el ID del paciente
-    if (!paciente) {
-      return res.status(400).json({ error: 'Patient ID is required' })
-    }
-
     const existingOrtodoncia = await Ortodoncia.findById(ortodonciaId)
     if (!existingOrtodoncia) {
       return res.status(404).json({ error: 'Ortodoncia not found' })
