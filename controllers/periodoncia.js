@@ -50,8 +50,14 @@ periodonciaRouter.post('/', async (req, res) => {
   try {
     const { paciente, ...periodonciaData } = req.body
 
-    const exisitingPatient = await Patient.findById(paciente)
-    if (!exisitingPatient) {
+    // Verificar si ya existe una periodoncia para el paciente
+    const existingPeriodoncia = await Periodoncia.findOne({ paciente })
+    if (existingPeriodoncia) {
+      return res.status(400).json({ error: 'Patient already has a Periodoncia record' })
+    }
+
+    const existingPatient = await Patient.findById(paciente)
+    if (!existingPatient) {
       return res.status(404).json({ error: 'Patient not found' })
     }
 
@@ -61,8 +67,8 @@ periodonciaRouter.post('/', async (req, res) => {
     })
 
     const savedPeriodoncia = await periodoncia.save()
-    exisitingPatient.periodoncia = savedPeriodoncia._id
-    await exisitingPatient.save()
+    existingPatient.periodoncia = savedPeriodoncia._id
+    await existingPatient.save()
 
     res.status(201).json(savedPeriodoncia)
   } catch (error) {

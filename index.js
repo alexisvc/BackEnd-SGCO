@@ -17,6 +17,8 @@ const evolutionChartsRouter = require('./controllers/evolutionChart')
 const endodonticTreatmentRouter = require('./controllers/endodonticTreatment')
 const cirugiaPatologiaRouter = require('./controllers/cirugiaPatologia')
 const periodonciaRouter = require('./controllers/periodoncia')
+const ortodonciaRouter = require('./controllers/ortodoncia')
+const evolucionOrtodonciaRouter = require('./controllers/evolucionOrtodoncia')
 
 app.use(cors())
 app.use(express.json())
@@ -43,6 +45,10 @@ app.use('/api/endodontic-treatment', endodonticTreatmentRouter)
 app.use('/api/cirugia-patologica', cirugiaPatologiaRouter)
 // Rutas para periodoncia
 app.use('/api/periodoncia', periodonciaRouter)
+//
+app.use('/api/ortodoncia', ortodonciaRouter)
+
+app.use('/api/evolucion-ortodoncia', evolucionOrtodonciaRouter)
 
 // Middleware para manejar errores 404
 app.use(notFound)

@@ -69,6 +69,10 @@ const patientSchema = new mongoose.Schema({
   periodoncia: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Periodoncia'
+  },
+  ortodoncia: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Ortodoncia'
   }
 })
 
