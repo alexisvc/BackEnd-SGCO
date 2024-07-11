@@ -1,14 +1,12 @@
 const mongoose = require('mongoose')
 
 const ortodonciaSchema = new mongoose.Schema({
-  diagnosticoOrtodoncia: {
-    type: String
-  },
-  objetivoOrtodoncia: String,
-  tiempoAproximadoOrtodoncia: String,
-  diagnosticoOrtopedia: String,
-  objetivoOrtopedia: String,
-  tiempoAproximadoOrtopedia: String,
+  diagnostico: String,
+  objetivo: String,
+  tiempoAproximado: String,
+  tipoBracket: String,
+  aparatoOrtopedico: String,
+  observaciones: String,
 
   evoluciones: [
     {
