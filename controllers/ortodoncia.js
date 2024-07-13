@@ -74,7 +74,7 @@ ortodonciaRouter.post('/', async (req, res) => {
     const savedOrtodoncia = await ortodoncia.save()
     existingPatient.ortodoncia = savedOrtodoncia._id
     await existingPatient.save()
-    
+
     res.status(201).json(savedOrtodoncia)
   } catch (error) {
     res.status(500).json({ error: 'Internal Server Error' })
