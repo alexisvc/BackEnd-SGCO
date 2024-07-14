@@ -77,6 +77,10 @@ const patientSchema = new mongoose.Schema({
   rehabilitacionOral: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'RehabilitacionOral'
+  },
+  disfuncionMandibular: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'DisfuncionMandibular'
   }
 })
 

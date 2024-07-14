@@ -20,6 +20,7 @@ const periodonciaRouter = require('./controllers/periodoncia')
 const ortodonciaRouter = require('./controllers/ortodoncia')
 const evolucionOrtodonciaRouter = require('./controllers/evolucionOrtodoncia')
 const rehabilitacionOralRouter = require('./controllers/rehabilitacionOral')
+const disfuncionMandibularRouter = require('./controllers/disfuncionMandibular')
 
 app.use(cors())
 app.use(express.json())
@@ -52,6 +53,8 @@ app.use('/api/ortodoncia', ortodonciaRouter)
 app.use('/api/evolucion-ortodoncia', evolucionOrtodonciaRouter)
 // Rutas para rehabilitación oral
 app.use('/api/rehabilitacion-oral', rehabilitacionOralRouter)
+// Rutas para disfunción mandibular
+app.use('/api/disfuncion-mandibular', disfuncionMandibularRouter)
 
 // Middleware para manejar errores 404
 app.use(notFound)
