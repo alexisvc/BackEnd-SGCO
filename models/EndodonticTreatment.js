@@ -46,12 +46,10 @@ const endodonticTreatmentSchema = new mongoose.Schema({
     trim: true
   },
   conductometriaTentativa: {
-    type: Number,
-    min: 0
+    type: String
   },
   conductometriaDefinitiva: {
-    type: Number,
-    min: 0
+    type: String
   },
   tecnicaInstrumentacion: {
     type: String,
