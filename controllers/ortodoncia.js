@@ -33,7 +33,7 @@ ortodonciaRouter.get('/:id', async (req, res) => {
 ortodonciaRouter.get('/patient/:patientId', async (req, res) => {
   try {
     const patientId = req.params.patientId
-    const ortodoncias = await Ortodoncia.find({ paciente: patientId }).populate('paciente')
+    const ortodoncias = await Ortodoncia.findOne({ paciente: patientId }).populate('paciente')
 
     if (!ortodoncias || ortodoncias.length === 0) {
       return res.status(404).json({ error: 'Ortodoncias not found for this patient' })

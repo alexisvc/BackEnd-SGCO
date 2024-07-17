@@ -33,7 +33,7 @@ medicalRecordsRouter.get('/:id', async (req, res) => {
 medicalRecordsRouter.get('/patient/:patientId', async (req, res) => {
   try {
     const patientId = req.params.patientId
-    const medicalRecord = await MedicalRecord.findOne({ paciente: patientId }).populate('paciente')
+    const medicalRecord = await MedicalRecord.findOne({ paciente: patientId }).populate('paciente', 'nombrePaciente numeroCedula')
 
     if (!medicalRecord) {
       return res.status(404).json({ error: 'Medical record not found for this patient' })
