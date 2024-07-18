@@ -30,7 +30,7 @@ app.get('/', (req, res) => {
   res.send('<h1>Bienvenido a mi SGCO</h1>')
 })
 
-//uploads
+// uploads
 app.use('/uploads', express.static('uploads'))
 // Rutas para usuarios
 app.use('/api/users', usersRouter)
