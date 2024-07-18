@@ -21,6 +21,7 @@ const ortodonciaRouter = require('./controllers/ortodoncia')
 const evolucionOrtodonciaRouter = require('./controllers/evolucionOrtodoncia')
 const rehabilitacionOralRouter = require('./controllers/rehabilitacionOral')
 const disfuncionMandibularRouter = require('./controllers/disfuncionMandibular')
+const consentimientoRouter = require('./controllers/consentimiento')
 
 app.use(cors())
 app.use(express.json())
@@ -29,6 +30,8 @@ app.get('/', (req, res) => {
   res.send('<h1>Bienvenido a mi SGCO</h1>')
 })
 
+//uploads
+app.use('/uploads', express.static('uploads'))
 // Rutas para usuarios
 app.use('/api/users', usersRouter)
 // Rutas para pacientes
@@ -55,6 +58,8 @@ app.use('/api/evolucion-ortodoncia', evolucionOrtodonciaRouter)
 app.use('/api/rehabilitacion-oral', rehabilitacionOralRouter)
 // Rutas para disfunción mandibular
 app.use('/api/disfuncion-mandibular', disfuncionMandibularRouter)
+// Rutas para consentimientos
+app.use('/api/consentimiento', consentimientoRouter)
 
 // Middleware para manejar errores 404
 app.use(notFound)

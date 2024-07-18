@@ -81,6 +81,10 @@ const patientSchema = new mongoose.Schema({
   disfuncionMandibular: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'DisfuncionMandibular'
+  },
+  consentimiento: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Consentimiento' // Referencia al modelo de Consentimiento
   }
 })
 
