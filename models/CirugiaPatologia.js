@@ -30,6 +30,10 @@ const cirugiaPatologiaSchema = new mongoose.Schema({
     ref: 'Patient',
     required: true,
     unique: true // Ensure unique reference per patient
+  },
+  archivo: {
+    type: String, // Ruta o nombre del archivo guardado
+    required: false // Puede ser opcional
   }
 })
 
