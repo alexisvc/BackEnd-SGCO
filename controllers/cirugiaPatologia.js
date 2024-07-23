@@ -1,3 +1,5 @@
+// controllers/cirugiaPatologiaController.js
+
 const express = require('express')
 const cirugiaPatologiaRouter = express.Router()
 const CirugiaPatologia = require('../models/CirugiaPatologia')
@@ -24,7 +26,8 @@ cirugiaPatologiaRouter.get('/', async (req, res) => {
     // Añadir la URL completa del archivo si existe
     const cirugiaPatologiasWithFileUrl = cirugiaPatologias.map(cirugiaPatologia => ({
       ...cirugiaPatologia._doc,
-      archivoUrl: cirugiaPatologia.archivo ? `${req.protocol}://${req.get('host')}/uploads/${cirugiaPatologia.archivo}` : null
+      archivo1Url: cirugiaPatologia.archivo1 ? `${req.protocol}://${req.get('host')}/uploads/${cirugiaPatologia.archivo1}` : null,
+      archivo2Url: cirugiaPatologia.archivo2 ? `${req.protocol}://${req.get('host')}/uploads/${cirugiaPatologia.archivo2}` : null
     }))
     res.json(cirugiaPatologiasWithFileUrl)
   } catch (error) {
@@ -45,7 +48,8 @@ cirugiaPatologiaRouter.get('/:id', async (req, res) => {
     // Añadir la URL completa del archivo si existe
     const cirugiaPatologiaWithFileUrl = {
       ...cirugiaPatologia._doc,
-      archivoUrl: cirugiaPatologia.archivo ? `${req.protocol}://${req.get('host')}/uploads/${cirugiaPatologia.archivo}` : null
+      archivo1Url: cirugiaPatologia.archivo1 ? `${req.protocol}://${req.get('host')}/uploads/${cirugiaPatologia.archivo1}` : null,
+      archivo2Url: cirugiaPatologia.archivo2 ? `${req.protocol}://${req.get('host')}/uploads/${cirugiaPatologia.archivo2}` : null
     }
 
     res.json(cirugiaPatologiaWithFileUrl)
@@ -67,7 +71,8 @@ cirugiaPatologiaRouter.get('/patient/:patientId', async (req, res) => {
     // Añadir la URL completa del archivo si existe
     const cirugiaPatologiaWithFileUrl = {
       ...cirugiaPatologia._doc,
-      archivoUrl: cirugiaPatologia.archivo ? `${req.protocol}://${req.get('host')}/uploads/${cirugiaPatologia.archivo}` : null
+      archivo1Url: cirugiaPatologia.archivo1 ? `${req.protocol}://${req.get('host')}/uploads/${cirugiaPatologia.archivo1}` : null,
+      archivo2Url: cirugiaPatologia.archivo2 ? `${req.protocol}://${req.get('host')}/uploads/${cirugiaPatologia.archivo2}` : null
     }
 
     res.json(cirugiaPatologiaWithFileUrl)
@@ -77,10 +82,11 @@ cirugiaPatologiaRouter.get('/patient/:patientId', async (req, res) => {
 })
 
 // Ruta para registrar una nueva cirugía patológica
-cirugiaPatologiaRouter.post('/', upload.single('archivo'), async (req, res) => {
+cirugiaPatologiaRouter.post('/', upload.fields([{ name: 'archivo1', maxCount: 1 }, { name: 'archivo2', maxCount: 1 }]), async (req, res) => {
   try {
     const { paciente, ...cirugiaPatologiaData } = req.body
-    const archivo = req.file ? req.file.filename : null
+    const archivo1 = req.files && req.files.archivo1 ? req.files.archivo1[0].filename : null
+    const archivo2 = req.files && req.files.archivo2 ? req.files.archivo2[0].filename : null
 
     if (!paciente) {
       return res.status(400).json({ error: 'Patient ID is required' })
@@ -99,17 +105,19 @@ cirugiaPatologiaRouter.post('/', upload.single('archivo'), async (req, res) => {
     const cirugiaPatologia = new CirugiaPatologia({
       paciente,
       ...cirugiaPatologiaData,
-      archivo
+      archivo1,
+      archivo2
     })
 
     const savedCirugiaPatologia = await cirugiaPatologia.save()
     existingPatient.cirugiaPatologia = savedCirugiaPatologia._id
     await existingPatient.save()
-    
+
     // Añadir la URL completa del archivo si existe
     const savedCirugiaPatologiaWithFileUrl = {
       ...savedCirugiaPatologia._doc,
-      archivoUrl: archivo ? `${req.protocol}://${req.get('host')}/uploads/${savedCirugiaPatologia.archivo}` : null
+      archivo1Url: archivo1 ? `${req.protocol}://${req.get('host')}/uploads/${savedCirugiaPatologia.archivo1}` : null,
+      archivo2Url: archivo2 ? `${req.protocol}://${req.get('host')}/uploads/${savedCirugiaPatologia.archivo2}` : null
     }
 
     res.status(201).json(savedCirugiaPatologiaWithFileUrl)
@@ -119,11 +127,12 @@ cirugiaPatologiaRouter.post('/', upload.single('archivo'), async (req, res) => {
 })
 
 // Ruta para actualizar una cirugía patológica por su ID
-cirugiaPatologiaRouter.put('/:id', upload.single('archivo'), async (req, res) => {
+cirugiaPatologiaRouter.put('/:id', upload.fields([{ name: 'archivo1', maxCount: 1 }, { name: 'archivo2', maxCount: 1 }]), async (req, res) => {
   try {
     const cirugiaPatologiaId = req.params.id
     const { paciente, ...cirugiaPatologiaData } = req.body
-    const archivo = req.file ? req.file.filename : null
+    const archivo1 = req.files && req.files.archivo1 ? req.files.archivo1[0].filename : null
+    const archivo2 = req.files && req.files.archivo2 ? req.files.archivo2[0].filename : null
 
     const existingCirugiaPatologia = await CirugiaPatologia.findById(cirugiaPatologiaId)
     if (!existingCirugiaPatologia) {
@@ -138,15 +147,17 @@ cirugiaPatologiaRouter.put('/:id', upload.single('archivo'), async (req, res) =>
       existingCirugiaPatologia.paciente = paciente
     }
 
-    if (archivo) existingCirugiaPatologia.archivo = archivo
+    if (archivo1) existingCirugiaPatologia.archivo1 = archivo1
+    if (archivo2) existingCirugiaPatologia.archivo2 = archivo2
     Object.assign(existingCirugiaPatologia, cirugiaPatologiaData)
 
     const updatedCirugiaPatologia = await existingCirugiaPatologia.save()
-    
+
     // Añadir la URL completa del archivo si existe
     const updatedCirugiaPatologiaWithFileUrl = {
       ...updatedCirugiaPatologia._doc,
-      archivoUrl: archivo ? `${req.protocol}://${req.get('host')}/uploads/${updatedCirugiaPatologia.archivo}` : null
+      archivo1Url: archivo1 ? `${req.protocol}://${req.get('host')}/uploads/${updatedCirugiaPatologia.archivo1}` : null,
+      archivo2Url: archivo2 ? `${req.protocol}://${req.get('host')}/uploads/${updatedCirugiaPatologia.archivo2}` : null
     }
 
     res.json(updatedCirugiaPatologiaWithFileUrl)

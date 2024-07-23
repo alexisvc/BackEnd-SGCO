@@ -1,3 +1,5 @@
+// models/CirugiaPatologia.js
+
 const mongoose = require('mongoose')
 
 const cirugiaPatologiaSchema = new mongoose.Schema({
@@ -31,7 +33,11 @@ const cirugiaPatologiaSchema = new mongoose.Schema({
     required: true,
     unique: true // Ensure unique reference per patient
   },
-  archivo: {
+  archivo1: {
+    type: String, // Ruta o nombre del archivo guardado
+    required: false // Puede ser opcional
+  },
+  archivo2: {
     type: String, // Ruta o nombre del archivo guardado
     required: false // Puede ser opcional
   }
