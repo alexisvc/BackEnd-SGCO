@@ -63,6 +63,14 @@ const endodonticTreatmentSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Patient',
     required: true
+  },
+  archivo1: {
+    type: String, // Ruta o nombre del archivo guardado
+    required: false // Puede ser opcional
+  },
+  archivo2: {
+    type: String, // Ruta o nombre del archivo guardado
+    required: false // Puede ser opcional
   }
 })
 
