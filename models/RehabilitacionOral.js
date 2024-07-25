@@ -70,6 +70,14 @@ const rehabilitacionOralSchema = new mongoose.Schema({
     ref: 'Patient',
     required: true,
     unique: true
+  },
+  archivo1: {
+    type: String, // Ruta o nombre del archivo guardado
+    required: false // Puede ser opcional
+  },
+  archivo2: {
+    type: String, // Ruta o nombre del archivo guardado
+    required: false // Puede ser opcional
   }
 })
 
