@@ -78,6 +78,10 @@ const rehabilitacionOralSchema = new mongoose.Schema({
   archivo2: {
     type: String, // Ruta o nombre del archivo guardado
     required: false // Puede ser opcional
+  },
+  archivo3: {
+    type: String, // Ruta o nombre del archivo guardado
+    required: false // Puede ser opcional
   }
 })
 

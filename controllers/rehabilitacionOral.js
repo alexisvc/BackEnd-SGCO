@@ -25,7 +25,8 @@ rehabilitacionOralRouter.get('/', async (req, res) => {
     const rehabilitacionesOralesWithFileUrl = rehabilitacionesOrales.map(rehabilitacionesOral => ({
       ...rehabilitacionesOral._doc,
       archivo1Url: rehabilitacionesOral.archivo1 ? `${req.protocol}://${req.get('host')}/uploads/${rehabilitacionesOral.archivo1}` : null,
-      archivo2Url: rehabilitacionesOral.archivo2 ? `${req.protocol}://${req.get('host')}/uploads/${rehabilitacionesOral.archivo2}` : null
+      archivo2Url: rehabilitacionesOral.archivo2 ? `${req.protocol}://${req.get('host')}/uploads/${rehabilitacionesOral.archivo2}` : null,
+      archivo3Url: rehabilitacionesOral.archivo3 ? `${req.protocol}://${req.get('host')}/uploads/${rehabilitacionesOral.archivo3}` : null
     }))
     res.json(rehabilitacionesOralesWithFileUrl)
   } catch (error) {
@@ -48,7 +49,8 @@ rehabilitacionOralRouter.get('/:id', async (req, res) => {
     const rehabilitacionesOralWithFileUrl = {
       ...rehabilitacionOral._doc,
       archivo1Url: rehabilitacionOral.archivo1 ? `${req.protocol}://${req.get('host')}/uploads/${rehabilitacionOral.archivo1}` : null,
-      archivo2Url: rehabilitacionOral.archivo2 ? `${req.protocol}://${req.get('host')}/uploads/${rehabilitacionOral.archivo2}` : null
+      archivo2Url: rehabilitacionOral.archivo2 ? `${req.protocol}://${req.get('host')}/uploads/${rehabilitacionOral.archivo2}` : null,
+      archivo3Url: rehabilitacionOral.archivo3 ? `${req.protocol}://${req.get('host')}/uploads/${rehabilitacionOral.archivo3}` : null
     }
 
     res.json(rehabilitacionesOralWithFileUrl)
@@ -72,7 +74,8 @@ rehabilitacionOralRouter.get('/patient/:patientId', async (req, res) => {
     const rehabilitacionOralWithFileUrl = {
       ...rehabilitacionOral._doc,
       archivo1Url: rehabilitacionOral.archivo1 ? `${req.protocol}://${req.get('host')}/uploads/${rehabilitacionOral.archivo1}` : null,
-      archivo2Url: rehabilitacionOral.archivo2 ? `${req.protocol}://${req.get('host')}/uploads/${rehabilitacionOral.archivo2}` : null
+      archivo2Url: rehabilitacionOral.archivo2 ? `${req.protocol}://${req.get('host')}/uploads/${rehabilitacionOral.archivo2}` : null,
+      archivo3Url: rehabilitacionOral.archivo3 ? `${req.protocol}://${req.get('host')}/uploads/${rehabilitacionOral.archivo3}` : null
     }
 
     res.json(rehabilitacionOralWithFileUrl)
@@ -83,11 +86,12 @@ rehabilitacionOralRouter.get('/patient/:patientId', async (req, res) => {
 })
 
 // Ruta para crear una nueva rehabilitación oral
-rehabilitacionOralRouter.post('/', upload.fields([{ name: 'archivo1', maxCount: 1 }, { name: 'archivo2', maxCount: 1 }]), async (req, res) => {
+rehabilitacionOralRouter.post('/', upload.fields([{ name: 'archivo1', maxCount: 1 }, { name: 'archivo2', maxCount: 1 }, { name: 'archivo3', maxCount: 1}]), async (req, res) => {
   try {
     const { paciente, ...rehabilitacionOralData } = req.body
     const archivo1 = req.files && req.files.archivo1 ? req.files.archivo1[0].filename : null
     const archivo2 = req.files && req.files.archivo2 ? req.files.archivo2[0].filename : null
+    const archivo3 = req.files && req.files.archivo3 ? req.files.archivo3[0].filename : null
 
     // Validate that the patient exists
     const existingPatient = await Patient.findById(paciente)
@@ -105,7 +109,8 @@ rehabilitacionOralRouter.post('/', upload.fields([{ name: 'archivo1', maxCount: 
       paciente,
       ...rehabilitacionOralData,
       archivo1,
-      archivo2
+      archivo2,
+      archivo3
     })
 
     const savedRehabilitacionOral = await rehabilitacionOral.save()
@@ -116,7 +121,8 @@ rehabilitacionOralRouter.post('/', upload.fields([{ name: 'archivo1', maxCount: 
     const savedRehabilitacionOralWithFileUrl = {
       ...savedRehabilitacionOral._doc,
       archivo1Url: archivo1 ? `${req.protocol}://${req.get('host')}/uploads/${savedRehabilitacionOral.archivo1}` : null,
-      archivo2Url: archivo2 ? `${req.protocol}://${req.get('host')}/uploads/${savedRehabilitacionOral.archivo2}` : null
+      archivo2Url: archivo2 ? `${req.protocol}://${req.get('host')}/uploads/${savedRehabilitacionOral.archivo2}` : null,
+      archivo3Url: archivo3 ? `${req.protocol}://${req.get('host')}/uploads/${savedRehabilitacionOral.archivo3}` : null
     }
 
     res.status(201).json(savedRehabilitacionOralWithFileUrl)
@@ -127,12 +133,13 @@ rehabilitacionOralRouter.post('/', upload.fields([{ name: 'archivo1', maxCount: 
 })
 
 // Ruta para actualizar una rehabilitación oral por su ID
-rehabilitacionOralRouter.put('/:id', upload.fields([{ name: 'archivo1', maxCount: 1 }, { name: 'archivo2', maxCount: 1 }]), async (req, res) => {
+rehabilitacionOralRouter.put('/:id', upload.fields([{ name: 'archivo1', maxCount: 1 }, { name: 'archivo2', maxCount: 1 }, { name: 'archivo3', maxCount: 1}]), async (req, res) => {
   try {
     const rehabilitacionOralId = req.params.id
     const { paciente, ...rehabilitacionOralData } = req.body
     const archivo1 = req.files && req.files.archivo1 ? req.files.archivo1[0].filename : null
     const archivo2 = req.files && req.files.archivo2 ? req.files.archivo2[0].filename : null
+    const archivo3 = req.files && req.files.archivo3 ? req.files.archivo3[0].filename : null
 
     const existingRejabilitacionOral = await RehabilitacionOral.findById(rehabilitacionOralId)
     if (!existingRejabilitacionOral) {
@@ -149,6 +156,7 @@ rehabilitacionOralRouter.put('/:id', upload.fields([{ name: 'archivo1', maxCount
 
     if (archivo1) existingRejabilitacionOral.archivo1 = archivo1
     if (archivo2) existingRejabilitacionOral.archivo2 = archivo2
+    if (archivo3) existingRejabilitacionOral.archivo3 = archivo3
     Object.assign(existingRejabilitacionOral, rehabilitacionOralData)
 
     const updatedRehabilitacionOral = await existingRejabilitacionOral.save()
@@ -157,7 +165,8 @@ rehabilitacionOralRouter.put('/:id', upload.fields([{ name: 'archivo1', maxCount
     const updatedRehabilitacionOralWithFileUrl = {
       ...updatedRehabilitacionOral._doc,
       archivo1Url: archivo1 ? `${req.protocol}://${req.get('host')}/uploads/${updatedRehabilitacionOral.archivo1}` : null,
-      archivo2Url: archivo2 ? `${req.protocol}://${req.get('host')}/uploads/${updatedRehabilitacionOral.archivo2}` : null
+      archivo2Url: archivo2 ? `${req.protocol}://${req.get('host')}/uploads/${updatedRehabilitacionOral.archivo2}` : null,
+      archivo3Url: archivo3 ? `${req.protocol}://${req.get('host')}/uploads/${updatedRehabilitacionOral.archivo3}` : null
     }
 
     res.json(updatedRehabilitacionOralWithFileUrl)
