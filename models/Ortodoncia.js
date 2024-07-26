@@ -14,12 +14,23 @@ const ortodonciaSchema = new mongoose.Schema({
       ref: 'EvolucionOrtodoncia'
     }
   ],
-
   paciente: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Patient',
     required: true,
     unique: true // Asegura que cada paciente tenga solo una periodoncia
+  },
+  archivo1: {
+    type: String, // Ruta o nombre del archivo guardado
+    required: false // Puede ser opcional
+  },
+  archivo2: {
+    type: String, // Ruta o nombre del archivo guardado
+    required: false // Puede ser opcional
+  },
+  archivo3: {
+    type: String, // Ruta o nombre del archivo guardado
+    required: false // Puede ser opcional
   }
 })
 
