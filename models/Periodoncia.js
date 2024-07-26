@@ -28,6 +28,14 @@ const periodonciaSchema = new mongoose.Schema({
     ref: 'Patient',
     required: true,
     unique: true // Asegura que cada paciente tenga solo una periodoncia
+  },
+  archivo1: {
+    type: String, // Ruta o nombre del archivo guardado
+    required: false // Puede ser opcional
+  },
+  archivo2: {
+    type: String, // Ruta o nombre del archivo guardado
+    required: false // Puede ser opcional
   }
 })
 
