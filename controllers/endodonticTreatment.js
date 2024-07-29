@@ -104,7 +104,6 @@ endodonticTreatmentRouter.post('/', upload.fields([{ name: 'archivo1', maxCount:
     })
 
     const savedEndodonticTreatment = await endodonticTreatment.save()
-
     // Add the endodontic treatment reference to the patient
     existingPatient.endodoncia.push(savedEndodonticTreatment._id)
     await existingPatient.save()

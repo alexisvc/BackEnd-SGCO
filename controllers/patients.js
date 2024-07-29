@@ -40,6 +40,20 @@ patientsRouter.get('/cedula/:numeroCedula', async (req, res) => {
   }
 })
 
+// Nueva ruta para buscar pacientes por nombre
+patientsRouter.get('/nombre/:nombrePaciente', async (req, res) => {
+  try {
+    const nombrePaciente = req.params.nombrePaciente
+    const patients = await Patient.find({ nombrePaciente: { $regex: nombrePaciente, $options: 'i' } })
+    if (patients.length === 0) {
+      return res.status(404).json({ error: 'No patients found' })
+    }
+    res.json(patients)
+  } catch (error) {
+    res.status(500).json({ error: 'Internal Server Error' })
+  }
+})
+
 // Ruta para registrar un nuevo paciente
 patientsRouter.post('/', async (req, res) => {
   try {

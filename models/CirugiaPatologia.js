@@ -4,42 +4,33 @@ const mongoose = require('mongoose')
 
 const cirugiaPatologiaSchema = new mongoose.Schema({
   antecedentesCirPat: {
-    type: String,
-    required: true
+    type: String
   },
   alergiasMedCirPat: {
-    type: String,
-    required: true
+    type: String
   },
   patologiaTejBland: {
-    type: String,
-    required: true
+    type: String
   },
   patologiaTejDuros: {
-    type: String,
-    required: true
+    type: String
   },
   diagRadiografico: {
-    type: String,
-    required: true
+    type: String
   },
   localizacionPatologia: {
-    type: String,
-    required: true
+    type: String
   },
   paciente: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Patient',
-    required: true,
-    unique: true // Ensure unique reference per patient
+    required: true
   },
   archivo1: {
-    type: String, // Ruta o nombre del archivo guardado
-    required: false // Puede ser opcional
+    type: String
   },
   archivo2: {
-    type: String, // Ruta o nombre del archivo guardado
-    required: false // Puede ser opcional
+    type: String // Puede ser opcional
   }
 })
 

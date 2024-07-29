@@ -62,10 +62,10 @@ const patientSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'EndodonticTreatment'
   }],
-  cirugiaPatologia: {
+  cirugiaPatologia: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'CirugiaPatologia'
-  },
+  }],
   periodoncia: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Periodoncia'

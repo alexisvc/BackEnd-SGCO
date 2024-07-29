@@ -62,18 +62,14 @@ cirugiaPatologiaRouter.get('/:id', async (req, res) => {
 cirugiaPatologiaRouter.get('/patient/:patientId', async (req, res) => {
   try {
     const patientId = req.params.patientId
-    const cirugiaPatologia = await CirugiaPatologia.findOne({ paciente: patientId }).populate('paciente', 'nombrePaciente numeroCedula')
-
-    if (!cirugiaPatologia) {
-      return res.status(404).json({ error: 'CirugiaPatologia not found for this patient' })
-    }
+    const cirugiaPatologias = await CirugiaPatologia.find({ paciente: patientId }).populate('paciente', 'nombrePaciente numeroCedula')
 
     // Añadir la URL completa del archivo si existe
-    const cirugiaPatologiaWithFileUrl = {
+    const cirugiaPatologiaWithFileUrl = cirugiaPatologias.map(cirugiaPatologia => ({
       ...cirugiaPatologia._doc,
       archivo1Url: cirugiaPatologia.archivo1 ? `${req.protocol}://${req.get('host')}/uploads/${cirugiaPatologia.archivo1}` : null,
       archivo2Url: cirugiaPatologia.archivo2 ? `${req.protocol}://${req.get('host')}/uploads/${cirugiaPatologia.archivo2}` : null
-    }
+    }))
 
     res.json(cirugiaPatologiaWithFileUrl)
   } catch (error) {
@@ -84,22 +80,20 @@ cirugiaPatologiaRouter.get('/patient/:patientId', async (req, res) => {
 // Ruta para registrar una nueva cirugía patológica
 cirugiaPatologiaRouter.post('/', upload.fields([{ name: 'archivo1', maxCount: 1 }, { name: 'archivo2', maxCount: 1 }]), async (req, res) => {
   try {
-    const { paciente, ...cirugiaPatologiaData } = req.body
-    const archivo1 = req.files && req.files.archivo1 ? req.files.archivo1[0].filename : null
-    const archivo2 = req.files && req.files.archivo2 ? req.files.archivo2[0].filename : null
+    console.log('Request Body:', req.body);
+    console.log('Request Files:', req.files);
+
+    const { paciente, ...cirugiaPatologiaData } = req.body;
+    const archivo1 = req.files && req.files.archivo1 ? req.files.archivo1[0].filename : null;
+    const archivo2 = req.files && req.files.archivo2 ? req.files.archivo2[0].filename : null;
 
     if (!paciente) {
-      return res.status(400).json({ error: 'Patient ID is required' })
+      return res.status(400).json({ error: 'Patient ID is required' });
     }
 
-    const existingPatient = await Patient.findById(paciente)
+    const existingPatient = await Patient.findById(paciente);
     if (!existingPatient) {
-      return res.status(404).json({ error: 'Patient not found' })
-    }
-
-    const existingCirugiaPatologia = await CirugiaPatologia.findOne({ paciente })
-    if (existingCirugiaPatologia) {
-      return res.status(400).json({ error: 'Patient already has a CirugiaPatologia record' })
+      return res.status(404).json({ error: 'Patient not found' });
     }
 
     const cirugiaPatologia = new CirugiaPatologia({
@@ -107,24 +101,30 @@ cirugiaPatologiaRouter.post('/', upload.fields([{ name: 'archivo1', maxCount: 1 
       ...cirugiaPatologiaData,
       archivo1,
       archivo2
-    })
+    });
 
-    const savedCirugiaPatologia = await cirugiaPatologia.save()
-    existingPatient.cirugiaPatologia = savedCirugiaPatologia._id
-    await existingPatient.save()
+    const savedCirugiaPatologia = await cirugiaPatologia.save();
+
+    // Añadir la referencia de la cirugía patológica al paciente
+    if (!Array.isArray(existingPatient.cirugiaPatologia)) {
+      existingPatient.cirugiaPatologia = [];
+    }
+    existingPatient.cirugiaPatologia.push(savedCirugiaPatologia._id);
+    await existingPatient.save();
 
     // Añadir la URL completa del archivo si existe
     const savedCirugiaPatologiaWithFileUrl = {
       ...savedCirugiaPatologia._doc,
       archivo1Url: archivo1 ? `${req.protocol}://${req.get('host')}/uploads/${savedCirugiaPatologia.archivo1}` : null,
       archivo2Url: archivo2 ? `${req.protocol}://${req.get('host')}/uploads/${savedCirugiaPatologia.archivo2}` : null
-    }
+    };
 
-    res.status(201).json(savedCirugiaPatologiaWithFileUrl)
+    res.status(201).json(savedCirugiaPatologiaWithFileUrl);
   } catch (error) {
-    res.status(500).json({ error: 'Internal Server Error' })
+    console.error('Error:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
   }
-})
+});
 
 // Ruta para actualizar una cirugía patológica por su ID
 cirugiaPatologiaRouter.put('/:id', upload.fields([{ name: 'archivo1', maxCount: 1 }, { name: 'archivo2', maxCount: 1 }]), async (req, res) => {
