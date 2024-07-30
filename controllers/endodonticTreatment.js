@@ -48,8 +48,8 @@ endodonticTreatmentRouter.get('/:id', async (req, res) => {
     // Añadir la URL completa del archivo si existe
     const endodonticTreatmentsWithFileUrl = {
       ...endodonticTreatment._doc,
-      archivo1Url: endodonticTreatment.archivo1 ? `${req.protocol}://${req.get('host')}/uploads/${cirugiaPatologia.archivo1}` : null,
-      archivo2Url: endodonticTreatment.archivo2 ? `${req.protocol}://${req.get('host')}/uploads/${cirugiaPatologia.archivo2}` : null
+      archivo1Url: endodonticTreatment.archivo1 ? `${req.protocol}://${req.get('host')}/uploads/${endodonticTreatment.archivo1}` : null,
+      archivo2Url: endodonticTreatment.archivo2 ? `${req.protocol}://${req.get('host')}/uploads/${endodonticTreatment.archivo2}` : null
     }
 
     res.json(endodonticTreatmentsWithFileUrl)

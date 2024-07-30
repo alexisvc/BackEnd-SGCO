@@ -83,7 +83,7 @@ ortodonciaRouter.get('/patient/:patientId', async (req, res) => {
 })
 
 // Registrar una nueva ortodoncia
-ortodonciaRouter.post('/', upload.fields([{ name: 'archivo1', maxCount: 1 }, { name: 'archivo2', maxCount: 1 }, { name: 'archivo3', maxCount: 1}]), async (req, res) => {
+ortodonciaRouter.post('/', upload.fields([{ name: 'archivo1', maxCount: 1 }, { name: 'archivo2', maxCount: 1 }, { name: 'archivo3', maxCount: 1 }]), async (req, res) => {
   try {
     const { paciente, ...ortodonciaData } = req.body
     const archivo1 = req.files && req.files.archivo1 ? req.files.archivo1[0].filename : null
@@ -129,7 +129,7 @@ ortodonciaRouter.post('/', upload.fields([{ name: 'archivo1', maxCount: 1 }, { n
 })
 
 // Actualizar una ortodoncia por su ID
-ortodonciaRouter.put('/:id', upload.fields([{ name: 'archivo1', maxCount: 1 }, { name: 'archivo2', maxCount: 1 }, { name: 'archivo3', maxCount: 1}]), async (req, res) => {
+ortodonciaRouter.put('/:id', upload.fields([{ name: 'archivo1', maxCount: 1 }, { name: 'archivo2', maxCount: 1 }, { name: 'archivo3', maxCount: 1 }]), async (req, res) => {
   try {
     const ortodonciaId = req.params.id
     const { paciente, ...ortodonciaData } = req.body
@@ -156,7 +156,7 @@ ortodonciaRouter.put('/:id', upload.fields([{ name: 'archivo1', maxCount: 1 }, {
     Object.assign(existingOrtodoncia, ortodonciaData)
 
     const updatedOrtodoncia = await existingOrtodoncia.save()
-    
+
     // Añadir la URL completa del archivo si existe
     const updatedOrtodonciaWithFileUrl = {
       ...updatedOrtodoncia._doc,

@@ -86,7 +86,7 @@ rehabilitacionOralRouter.get('/patient/:patientId', async (req, res) => {
 })
 
 // Ruta para crear una nueva rehabilitación oral
-rehabilitacionOralRouter.post('/', upload.fields([{ name: 'archivo1', maxCount: 1 }, { name: 'archivo2', maxCount: 1 }, { name: 'archivo3', maxCount: 1}]), async (req, res) => {
+rehabilitacionOralRouter.post('/', upload.fields([{ name: 'archivo1', maxCount: 1 }, { name: 'archivo2', maxCount: 1 }, { name: 'archivo3', maxCount: 1 }]), async (req, res) => {
   try {
     const { paciente, ...rehabilitacionOralData } = req.body
     const archivo1 = req.files && req.files.archivo1 ? req.files.archivo1[0].filename : null
@@ -133,7 +133,7 @@ rehabilitacionOralRouter.post('/', upload.fields([{ name: 'archivo1', maxCount: 
 })
 
 // Ruta para actualizar una rehabilitación oral por su ID
-rehabilitacionOralRouter.put('/:id', upload.fields([{ name: 'archivo1', maxCount: 1 }, { name: 'archivo2', maxCount: 1 }, { name: 'archivo3', maxCount: 1}]), async (req, res) => {
+rehabilitacionOralRouter.put('/:id', upload.fields([{ name: 'archivo1', maxCount: 1 }, { name: 'archivo2', maxCount: 1 }, { name: 'archivo3', maxCount: 1 }]), async (req, res) => {
   try {
     const rehabilitacionOralId = req.params.id
     const { paciente, ...rehabilitacionOralData } = req.body
