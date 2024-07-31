@@ -13,13 +13,11 @@ const evolutionChartSchema = new mongoose.Schema({
     type: String,
     required: true
   },
-  firmaOdon: {
-    type: String,
-    required: true
+  archivo1: {
+    type: String
   },
-  firmaPaciente: {
-    type: String,
-    required: true
+  archivo2: {
+    type: String
   },
   paciente: {
     type: mongoose.Schema.Types.ObjectId,

@@ -80,9 +80,6 @@ cirugiaPatologiaRouter.get('/patient/:patientId', async (req, res) => {
 // Ruta para registrar una nueva cirugía patológica
 cirugiaPatologiaRouter.post('/', upload.fields([{ name: 'archivo1', maxCount: 1 }, { name: 'archivo2', maxCount: 1 }]), async (req, res) => {
   try {
-    console.log('Request Body:', req.body)
-    console.log('Request Files:', req.files)
-
     const { paciente, ...cirugiaPatologiaData } = req.body
     const archivo1 = req.files && req.files.archivo1 ? req.files.archivo1[0].filename : null
     const archivo2 = req.files && req.files.archivo2 ? req.files.archivo2[0].filename : null
