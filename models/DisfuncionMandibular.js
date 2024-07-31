@@ -1,15 +1,16 @@
 const mongoose = require('mongoose')
 
 const disfuncionMandibularSchema = new mongoose.Schema({
-  huesoCortical: Boolean,
-  espacioArticular: Boolean,
-  condillo: Boolean,
-  desviacionLineaMedia: Boolean,
-  conReduccion: Boolean,
-  sinReduccion: Boolean,
-  clickArticular: Boolean,
-  crepitacion: Boolean,
-  subluxacion: Boolean,
+  huesoCortical: [String],
+  espacioArticular: [String],
+  condillo: [String],
+  desviacionLineaMedia: [String],
+  desplazamientoLineaMedia: String,
+  conReduccion: [String],
+  sinReduccion: [String],
+  clickArticular: [String],
+  crepitacion: [String],
+  subluxacion: [String],
   dolorArticularDer: [String],
   dolorArticularIzq: [String],
   dolorMuscularIzq: [String],
@@ -20,6 +21,7 @@ const disfuncionMandibularSchema = new mongoose.Schema({
     trim: true
   },
   dolorOrofacialComunMuscular: [String],
+  otroDolorOrofacialComunMuscular: String,
   mallampati: [String],
   dolorOrofacialComunApnea: [String],
   paciente: {

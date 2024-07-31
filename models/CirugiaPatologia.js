@@ -21,6 +21,9 @@ const cirugiaPatologiaSchema = new mongoose.Schema({
   localizacionPatologia: {
     type: String
   },
+  extraccionDental: {
+    type: String
+  },
   paciente: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Patient',
