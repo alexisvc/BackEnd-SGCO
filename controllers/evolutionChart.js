@@ -8,14 +8,15 @@ const path = require('path')
 // Configuración de multer para subir archivos
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, 'uploads/') // Carpeta donde se guardarán los archivos
+    cb(null, 'uploads/');
   },
   filename: (req, file, cb) => {
-    cb(null, Date.now() + path.extname(file.originalname)) // Nombre único para el archivo
+    cb(null, `${file.fieldname}_${Date.now()}${path.extname(file.originalname)}`);
   }
-})
+});
 
 const upload = multer({ storage })
+
 
 // Route to get all evolution charts
 evolutionChartsRouter.get('/', async (req, res) => {
@@ -78,51 +79,48 @@ evolutionChartsRouter.get('/patient/:patientId', async (req, res) => {
 })
 
 // Route to create a new evolution chart
-evolutionChartsRouter.post('/', upload.fields([{ name: 'archivo1', maxCount: 1 }, { name: 'archivo2', maxCount: 1 }]), async (req, res) => {
+evolutionChartsRouter.post('/', upload.fields([
+  { name: 'archivo1', maxCount: 1 },
+  { name: 'archivo2', maxCount: 1 }
+]), async (req, res) => {
   try {
-    const { paciente, ...evolutionChartData } = req.body
-    const archivo1 = req.files && req.files.archivo1 ? req.files.archivo1[0].filename : null
-    const archivo2 = req.files && req.files.archivo2 ? req.files.archivo2[0].filename : null
-    
+    const { paciente, ...evolutionChartData } = req.body;
+
+    console.log('Received files:', req.files);
+
+    const archivo1 = req.files['archivo1'] ? req.files['archivo1'][0].filename : null;
+    const archivo2 = req.files['archivo2'] ? req.files['archivo2'][0].filename : null;
+
+    console.log('archivo1:', archivo1);
+    console.log('archivo2:', archivo2);
+
     if (!paciente) {
-      return res.status(400).json({ error: 'Patient ID is required' })
-    }
-    // Validate that the patient exists
-    const existingPatient = await Patient.findById(paciente)
-    if (!existingPatient) {
-      return res.status(400).json({ error: 'Patient not found' })
+      return res.status(400).json({ error: 'Patient ID is required' });
     }
 
-    console.log('evolutionChartData', evolutionChartData)
-    console.log('archivo1', archivo1)
-    console.log('archivo2', archivo2)
+    const existingPatient = await Patient.findById(paciente);
+    if (!existingPatient) {
+      return res.status(400).json({ error: 'Patient not found' });
+    }
 
     const evolutionChart = new EvolutionChart({
       paciente,
       ...evolutionChartData,
       archivo1,
       archivo2
-    })
+    });
 
-    const savedEvolutionChart = await evolutionChart.save()
+    const savedEvolutionChart = await evolutionChart.save();
 
-    // Add the evolution chart reference to the patient
-    existingPatient.evolutionCharts = existingPatient.evolutionCharts.concat(savedEvolutionChart._id)
-    await existingPatient.save()
+    existingPatient.evolutionCharts = existingPatient.evolutionCharts.concat(savedEvolutionChart._id);
+    await existingPatient.save();
 
-    // Añadir la URL completa del archivo si existe
-    const evolutionChartWithFileUrl = {
-      ...evolutionChart._doc,
-      archivo1Url: archivo1 ? `${req.protocol}://${req.get('host')}/uploads/${evolutionChart.archivo1}` : null,
-      archivo2Url: archivo2 ? `${req.protocol}://${req.get('host')}/uploads/${evolutionChart.archivo2}` : null
-    }
-
-    res.status(201).json(evolutionChartWithFileUrl)
+    res.status(201).json(savedEvolutionChart);
   } catch (error) {
-    console.error(error)
-    res.status(500).json({ error: 'Internal Server Error' })
+    console.error('Error in POST /evolution-charts:', error);
+    res.status(500).json({ error: 'Internal Server Error', details: error.message });
   }
-})
+});
 
 // Route to update an evolution chart by ID
 evolutionChartsRouter.put('/:id', upload.fields([{ name: 'archivo1', maxCount: 1 }, { name: 'archivo2', maxCount: 1 }]), async (req, res) => {
