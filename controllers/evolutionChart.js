@@ -93,6 +93,10 @@ evolutionChartsRouter.post('/', upload.fields([{ name: 'archivo1', maxCount: 1 }
       return res.status(400).json({ error: 'Patient not found' })
     }
 
+    console.log('evolutionChartData', evolutionChartData)
+    console.log('archivo1', archivo1)
+    console.log('archivo2', archivo2)
+
     const evolutionChart = new EvolutionChart({
       paciente,
       ...evolutionChartData,
