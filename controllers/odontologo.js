@@ -58,40 +58,40 @@ odontologoRouter.get('/especialidad/:especialidad', async (req, res) => {
 
 // Ruta para registrar un nuevo odontólogo
 odontologoRouter.post('/', async (req, res) => {
-    try {
-      const {
-        nombreOdontologo,
-        edadOdontologo,
-        correoOdontologo,
-        direccionOdontologo,
-        generoOdontologo,
-        especialidad,
-        telefono
-      } = req.body;
-  
-      // Validar que todos los campos requeridos están presentes
-      if (!nombreOdontologo || !edadOdontologo || !correoOdontologo || !direccionOdontologo || !generoOdontologo || !especialidad || !telefono) {
-        return res.status(400).json({ error: 'All fields are required' });
-      }
-  
-      // Crear el nuevo odontólogo
-      const odontologo = new Odontologo({
-        nombreOdontologo,
-        edadOdontologo,
-        correoOdontologo,
-        direccionOdontologo,
-        generoOdontologo,
-        especialidad,
-        telefono
-      });
-  
-      // Guardar el odontólogo en la base de datos
-      const savedOdontologo = await odontologo.save();
-      res.json(savedOdontologo);
-    } catch (error) {
-      res.status(500).json({ error: 'Internal Server Error' });
+  try {
+    const {
+      nombreOdontologo,
+      edadOdontologo,
+      correoOdontologo,
+      direccionOdontologo,
+      generoOdontologo,
+      especialidad,
+      telefono
+    } = req.body
+
+    // Validar que todos los campos requeridos están presentes
+    if (!nombreOdontologo || !edadOdontologo || !correoOdontologo || !direccionOdontologo || !generoOdontologo || !especialidad || !telefono) {
+      return res.status(400).json({ error: 'All fields are required' })
     }
-  });
+
+    // Crear el nuevo odontólogo
+    const odontologo = new Odontologo({
+      nombreOdontologo,
+      edadOdontologo,
+      correoOdontologo,
+      direccionOdontologo,
+      generoOdontologo,
+      especialidad,
+      telefono
+    })
+
+    // Guardar el odontólogo en la base de datos
+    const savedOdontologo = await odontologo.save()
+    res.json(savedOdontologo)
+  } catch (error) {
+    res.status(500).json({ error: 'Internal Server Error' })
+  }
+})
 
 // Ruta para actualizar un odontólogo por su ID
 odontologoRouter.put('/:id', async (req, res) => {
