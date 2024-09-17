@@ -22,6 +22,7 @@ const evolucionOrtodonciaRouter = require('./controllers/evolucionOrtodoncia')
 const rehabilitacionOralRouter = require('./controllers/rehabilitacionOral')
 const disfuncionMandibularRouter = require('./controllers/disfuncionMandibular')
 const consentimientoRouter = require('./controllers/consentimiento')
+const odontologoRouter = require('./controllers/odontologo')
 
 app.use(cors())
 app.use(express.json())
@@ -60,6 +61,8 @@ app.use('/api/rehabilitacion-oral', rehabilitacionOralRouter)
 app.use('/api/disfuncion-mandibular', disfuncionMandibularRouter)
 // Rutas para consentimientos
 app.use('/api/consentimiento', consentimientoRouter)
+// Rutas para odontólogo
+app.use('/api/odontologos', odontologoRouter)
 
 // Middleware para manejar errores 404
 app.use(notFound)
