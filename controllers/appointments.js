@@ -11,8 +11,8 @@ const isOdontologoAvailable = async (odontologoId, fecha, hora) => {
 }
 // Función para verificar si un paciente está disponible a una hora específica
 const isPacienteAvailable = async (pacienteId, fecha, hora) => {
-  const appointment = await Appointment.findOne({ paciente: pacienteId, fecha, hora });
-  return !appointment; // Retorna verdadero si no hay una cita ya agendada
+  const appointment = await Appointment.findOne({ paciente: pacienteId, fecha, hora })
+  return !appointment // Retorna verdadero si no hay una cita ya agendada
 }
 
 // Ruta para obtener todas las citas
@@ -78,45 +78,45 @@ appointmentsRouter.get('/paciente/:pacienteId', async (req, res) => {
 // Ruta para obtener las horas ocupadas de un odontólogo en una fecha específica
 appointmentsRouter.get('/horas-ocupadas/:odontologoId/:fecha', async (req, res) => {
   try {
-    const { odontologoId, fecha } = req.params;
-    const appointments = await Appointment.find({ odontologo: odontologoId, fecha });
+    const { odontologoId, fecha } = req.params
+    const appointments = await Appointment.find({ odontologo: odontologoId, fecha })
 
     // Extraer las horas ocupadas de las citas
-    const horasOcupadas = appointments.map(app => app.hora);
-    res.json(horasOcupadas);
+    const horasOcupadas = appointments.map(app => app.hora)
+    res.json(horasOcupadas)
   } catch (error) {
-    res.status(500).json({ error: 'Internal Server Error' });
+    res.status(500).json({ error: 'Internal Server Error' })
   }
-});
+})
 
 // Ruta para crear una nueva cita
 appointmentsRouter.post('/', async (req, res) => {
   try {
-    const { paciente, odontologo, fecha, hora } = req.body;
+    const { paciente, odontologo, fecha, hora } = req.body
 
     // Validaciones básicas
     if (!paciente || !odontologo || !fecha || !hora) {
-      return res.status(400).json({ error: 'All fields are required' });
+      return res.status(400).json({ error: 'All fields are required' })
     }
 
     // Verificar si el paciente y odontólogo existen
-    const existingPatient = await Patient.findById(paciente);
-    const existingOdontologo = await Odontologo.findById(odontologo);
+    const existingPatient = await Patient.findById(paciente)
+    const existingOdontologo = await Odontologo.findById(odontologo)
 
     if (!existingPatient || !existingOdontologo) {
-      return res.status(404).json({ error: 'Paciente or Odontólogo not found' });
+      return res.status(404).json({ error: 'Paciente or Odontólogo not found' })
     }
 
     // Verificar la disponibilidad del odontólogo
-    const odontologoAvailable = await isOdontologoAvailable(odontologo, fecha, hora);
+    const odontologoAvailable = await isOdontologoAvailable(odontologo, fecha, hora)
     if (!odontologoAvailable) {
-      return res.status(400).json({ error: 'Odontólogo not available at this time' });
+      return res.status(400).json({ error: 'Odontólogo not available at this time' })
     }
 
     // Verificar la disponibilidad del paciente
-    const pacienteAvailable = await isPacienteAvailable(paciente, fecha, hora);
+    const pacienteAvailable = await isPacienteAvailable(paciente, fecha, hora)
     if (!pacienteAvailable) {
-      return res.status(400).json({ error: 'Paciente already has an appointment at this time' });
+      return res.status(400).json({ error: 'Paciente already has an appointment at this time' })
     }
 
     // Crear la cita
@@ -125,15 +125,15 @@ appointmentsRouter.post('/', async (req, res) => {
       odontologo,
       fecha,
       hora
-    });
+    })
 
-    const savedAppointment = await appointment.save();
-    res.status(201).json(savedAppointment);
+    const savedAppointment = await appointment.save()
+    res.status(201).json(savedAppointment)
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    console.error(error)
+    res.status(500).json({ error: 'Internal Server Error' })
   }
-});
+})
 
 // Ruta para actualizar una cita por ID
 appointmentsRouter.put('/:id', async (req, res) => {
