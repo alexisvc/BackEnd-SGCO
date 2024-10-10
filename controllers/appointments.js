@@ -51,40 +51,64 @@ const isPacienteAvailable = async (pacienteId, fecha, horaInicio, horaFin) => {
 }
 */
 // Función mejorada para verificar si hay solapamiento de citas
-const isOverlapping = async (odontologoId, fecha, horaInicio, horaFin, excludeAppointmentId = null) => {
-  console.log(`Verificando solapamiento para: ${odontologoId}, ${fecha}, ${horaInicio}-${horaFin}, excluyendo: ${excludeAppointmentId}`)
+const isOverlapping = async (odontologoId, pacienteId, fecha, horaInicio, horaFin, excludeAppointmentId = null) => {
+  console.log(`Verificando solapamiento para: Odontólogo ${odontologoId}, Paciente ${pacienteId}, ${fecha}, ${horaInicio}-${horaFin}, excluyendo: ${excludeAppointmentId}`)
 
-  const appointments = await Appointment.find({
+  const odontologoAppointments = await Appointment.find({
     odontologo: odontologoId,
-    fecha: new Date(fecha), // Asegurarse de que la fecha se compara correctamente
+    fecha: new Date(fecha),
     _id: { $ne: excludeAppointmentId }
   }).populate('paciente', 'nombrePaciente')
 
-  console.log(`Citas encontradas para comparar: ${appointments.length}`)
+  const pacienteAppointments = await Appointment.find({
+    paciente: pacienteId,
+    fecha: new Date(fecha),
+    _id: { $ne: excludeAppointmentId }
+  }).populate('odontologo', 'nombreOdontologo')
+
+  console.log(`Citas del odontólogo encontradas: ${odontologoAppointments.length}`)
+  console.log(`Citas del paciente encontradas: ${pacienteAppointments.length}`)
 
   const newStart = dayjs(`${fecha}T${horaInicio}`)
   const newEnd = dayjs(`${fecha}T${horaFin}`)
 
-  for (const appointment of appointments) {
-    console.log(`Comparando con cita: ${appointment._id}`)
+  const checkOverlap = (appointment) => {
     const existingStart = dayjs(`${fecha}T${appointment.horaInicio}`)
     const existingEnd = dayjs(`${fecha}T${appointment.horaFin}`)
 
-    if (
+    return (
       (newStart.isAfter(existingStart) && newStart.isBefore(existingEnd)) ||
       (newEnd.isAfter(existingStart) && newEnd.isBefore(existingEnd)) ||
       (newStart.isBefore(existingStart) && newEnd.isAfter(existingEnd)) ||
       newStart.isSame(existingStart) ||
       newEnd.isSame(existingEnd)
-    ) {
-      console.log(`Solapamiento detectado con cita: ${appointment._id}`)
-      return {
-        isOverlapping: true,
-        overlappingAppointment: {
-          paciente: appointment.paciente.nombrePaciente,
-          horaInicio: appointment.horaInicio,
-          horaFin: appointment.horaFin
-        }
+    )
+  }
+
+  const odontologoOverlap = odontologoAppointments.find(checkOverlap)
+  if (odontologoOverlap) {
+    console.log(`Solapamiento detectado con cita del odontólogo: ${odontologoOverlap._id}`)
+    return {
+      isOverlapping: true,
+      type: 'odontologo',
+      overlappingAppointment: {
+        paciente: odontologoOverlap.paciente.nombrePaciente,
+        horaInicio: odontologoOverlap.horaInicio,
+        horaFin: odontologoOverlap.horaFin
+      }
+    }
+  }
+
+  const pacienteOverlap = pacienteAppointments.find(checkOverlap)
+  if (pacienteOverlap) {
+    console.log(`Solapamiento detectado con cita del paciente: ${pacienteOverlap._id}`)
+    return {
+      isOverlapping: true,
+      type: 'paciente',
+      overlappingAppointment: {
+        odontologo: pacienteOverlap.odontologo.nombreOdontologo,
+        horaInicio: pacienteOverlap.horaInicio,
+        horaFin: pacienteOverlap.horaFin
       }
     }
   }
@@ -190,6 +214,28 @@ appointmentsRouter.get('/horas-ocupadas/:odontologoId/:fecha', async (req, res) 
     res.status(500).json({ error: 'Internal Server Error' })
   }
 })
+
+// Ruta para obtener los horarios ocupados de un odontólogo en una fecha específica
+appointmentsRouter.get('/horarios-ocupados/:odontologoId/:fecha', async (req, res) => {
+  try {
+    const { odontologoId, fecha } = req.params;
+    const appointments = await Appointment.find({ 
+      odontologo: odontologoId, 
+      fecha: new Date(fecha)
+    });
+
+    const horariosOcupados = appointments.map(app => ({
+      horaInicio: app.horaInicio,
+      horaFin: app.horaFin
+    }));
+
+    res.json(horariosOcupados);
+  } catch (error) {
+    console.error('Error al obtener horarios ocupados:', error);
+    res.status(500).json({ error: 'Error interno del servidor' });
+  }
+});
+
 /*
 // Ruta para crear una nueva cita
 appointmentsRouter.post('/', async (req, res) => {
@@ -244,13 +290,16 @@ appointmentsRouter.post('/', validateAppointmentData, async (req, res) => {
 
     console.log(`Intentando crear cita: ${JSON.stringify(req.body)}`)
 
-    const overlapResult = await isOverlapping(odontologo, fecha, horaInicio, horaFin)
+    const overlapResult = await isOverlapping(odontologo, paciente, fecha, horaInicio, horaFin)
     if (overlapResult.isOverlapping) {
-      const { paciente, horaInicio, horaFin } = overlapResult.overlappingAppointment
-      console.log(`Solapamiento detectado para la cita: ${JSON.stringify(req.body)}`)
-      return res.status(400).json({
-        error: `El odontólogo no está disponible en el horario seleccionado. Se solapa con una cita existente del paciente ${paciente} de ${horaInicio} a ${horaFin}.`
-      })
+      console.log(`Solapamiento detectado para la cita: ${JSON.stringify(overlapResult)}`)
+      let errorMessage;
+      if (overlapResult.type === 'odontologo') {
+        errorMessage = `El odontólogo no está disponible en el horario seleccionado. Se solapa con una cita existente del paciente ${overlapResult.overlappingAppointment.paciente} de ${overlapResult.overlappingAppointment.horaInicio} a ${overlapResult.overlappingAppointment.horaFin}.`;
+      } else {
+        errorMessage = `El paciente ya tiene una cita programada en este horario con el odontólogo ${overlapResult.overlappingAppointment.odontologo} de ${overlapResult.overlappingAppointment.horaInicio} a ${overlapResult.overlappingAppointment.horaFin}.`;
+      }
+      return res.status(400).json({ error: errorMessage })
     }
 
     // Calcular la duración
@@ -277,7 +326,7 @@ appointmentsRouter.post('/', validateAppointmentData, async (req, res) => {
 })
 
 // Ruta para actualizar una cita
-appointmentsRouter.put('/:id', async (req, res) => {
+appointmentsRouter.put('/:id', validateAppointmentData, async (req, res) => {
   try {
     const appointmentId = req.params.id
     const { paciente, odontologo, fecha, horaInicio, horaFin } = req.body
@@ -289,13 +338,16 @@ appointmentsRouter.put('/:id', async (req, res) => {
       return res.status(404).json({ error: 'Cita no encontrada' })
     }
 
-    const overlapResult = await isOverlapping(odontologo, fecha, horaInicio, horaFin, appointmentId)
+    const overlapResult = await isOverlapping(odontologo, paciente, fecha, horaInicio, horaFin, appointmentId)
     if (overlapResult.isOverlapping) {
-      const { paciente, horaInicio, horaFin } = overlapResult.overlappingAppointment
-      console.log(`Solapamiento detectado para la actualización de la cita ${appointmentId}:`, req.body)
-      return res.status(400).json({
-        error: `El odontólogo no está disponible en el horario seleccionado. Se solapa con una cita existente del paciente ${paciente} de ${horaInicio} a ${horaFin}.`
-      })
+      console.log(`Solapamiento detectado para la actualización de la cita ${appointmentId}:`, overlapResult)
+      let errorMessage;
+      if (overlapResult.type === 'odontologo') {
+        errorMessage = `El odontólogo no está disponible en el horario seleccionado. Se solapa con una cita existente del paciente ${overlapResult.overlappingAppointment.paciente} de ${overlapResult.overlappingAppointment.horaInicio} a ${overlapResult.overlappingAppointment.horaFin}.`;
+      } else {
+        errorMessage = `El paciente ya tiene una cita programada en este horario con el odontólogo ${overlapResult.overlappingAppointment.odontologo} de ${overlapResult.overlappingAppointment.horaInicio} a ${overlapResult.overlappingAppointment.horaFin}.`;
+      }
+      return res.status(400).json({ error: errorMessage })
     }
 
     existingAppointment.paciente = paciente
