@@ -66,12 +66,14 @@ patientsRouter.post('/', async (req, res) => {
       generoPaciente,
       numeroCedula,
       ocupacion,
-      telefono,
+      telefono, // Añadido
+      apiKey, // Añadido
       telContactoEmergencia,
       afinidadContactoEmergencia
     } = req.body
 
-    if (!nombrePaciente || !edadPaciente || !fechaNacimiento || !correoPaciente || !direccionPaciente || !generoPaciente || !numeroCedula || !ocupacion || !telefono || !telContactoEmergencia || !afinidadContactoEmergencia) {
+    // Validación: verificar que todos los campos estén presentes
+    if (!nombrePaciente || !edadPaciente || !fechaNacimiento || !correoPaciente || !direccionPaciente || !generoPaciente || !numeroCedula || !ocupacion || !telefono || !apiKey || !telContactoEmergencia || !afinidadContactoEmergencia) {
       return res.status(400).json({ error: 'All fields are required' })
     }
 
@@ -84,7 +86,8 @@ patientsRouter.post('/', async (req, res) => {
       generoPaciente,
       numeroCedula,
       ocupacion,
-      telefono,
+      telefono, // Añadido
+      apiKey, // Añadido
       telContactoEmergencia,
       afinidadContactoEmergencia
     })
@@ -110,16 +113,19 @@ patientsRouter.put('/:id', async (req, res) => {
       generoPaciente,
       numeroCedula,
       ocupacion,
-      telefono,
+      telefono, // Añadido
+      apiKey, // Añadido
       telContactoEmergencia,
       afinidadContactoEmergencia
     } = req.body
 
+    // Verificar si el paciente existe
     const existingPatient = await Patient.findById(patientId)
     if (!existingPatient) {
       return res.status(404).json({ error: 'Patient not found' })
     }
 
+    // Actualización de los campos, si están presentes
     if (nombrePaciente) existingPatient.nombrePaciente = nombrePaciente
     if (edadPaciente) existingPatient.edadPaciente = edadPaciente
     if (fechaNacimiento) existingPatient.fechaNacimiento = fechaNacimiento
@@ -128,7 +134,8 @@ patientsRouter.put('/:id', async (req, res) => {
     if (generoPaciente) existingPatient.generoPaciente = generoPaciente
     if (numeroCedula) existingPatient.numeroCedula = numeroCedula
     if (ocupacion) existingPatient.ocupacion = ocupacion
-    if (telefono) existingPatient.telefono = telefono
+    if (telefono) existingPatient.telefono = telefono // Añadido
+    if (apiKey) existingPatient.apiKey = apiKey // Añadido
     if (telContactoEmergencia) existingPatient.telContactoEmergencia = telContactoEmergencia
     if (afinidadContactoEmergencia) existingPatient.afinidadContactoEmergencia = afinidadContactoEmergencia
 
