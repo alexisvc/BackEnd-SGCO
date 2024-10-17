@@ -73,7 +73,7 @@ patientsRouter.post('/', async (req, res) => {
     } = req.body
 
     // Validación: verificar que todos los campos estén presentes
-    if (!nombrePaciente || !edadPaciente || !fechaNacimiento || !correoPaciente || !direccionPaciente || !generoPaciente || !numeroCedula || !ocupacion || !telefono || !apiKey || !telContactoEmergencia || !afinidadContactoEmergencia) {
+    if (!nombrePaciente || !edadPaciente || !fechaNacimiento || !correoPaciente || !direccionPaciente || !generoPaciente || !numeroCedula || !ocupacion || !telefono || !telContactoEmergencia || !afinidadContactoEmergencia) {
       return res.status(400).json({ error: 'All fields are required' })
     }
 

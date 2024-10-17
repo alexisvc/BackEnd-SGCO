@@ -39,8 +39,8 @@ const patientSchema = new mongoose.Schema({
     required: true
   },
   apiKey: {
-    type: String,
-    required: true
+    type: String
+    //required: true
   },
   telContactoEmergencia: {
     type: String,

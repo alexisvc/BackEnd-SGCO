@@ -68,9 +68,9 @@ const sendAppointmentReminders = async () => {
   }
 }
 
-// Configuración del cron job para ejecutar todos los días a las 11:40 AM
+// Configuración del cron job para ejecutar todos los días a las
 const scheduleDailyReminders = () => {
-  cron.schedule('* * * * *', async () => {
+  cron.schedule('0 20 * * *', async () => {
     console.log('Cron job ejecutado: verificando citas para enviar recordatorios...')
     await sendAppointmentReminders()
   })

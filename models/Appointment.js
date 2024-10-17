@@ -26,6 +26,9 @@ const appointmentSchema = new mongoose.Schema({
   duracion: {
     type: Number,
     default: 15 // Cada cita dura 15 minutos por defecto
+  },
+  comentario: {
+    type: String
   }
 })
 

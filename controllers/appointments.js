@@ -286,7 +286,7 @@ appointmentsRouter.post('/', async (req, res) => {
 // Ruta para crear una nueva cita
 appointmentsRouter.post('/', validateAppointmentData, async (req, res) => {
   try {
-    const { paciente, odontologo, fecha, horaInicio, horaFin } = req.body
+    const { paciente, odontologo, fecha, horaInicio, horaFin, comentario } = req.body
 
     console.log(`Intentando crear cita: ${JSON.stringify(req.body)}`)
 
@@ -313,7 +313,8 @@ appointmentsRouter.post('/', validateAppointmentData, async (req, res) => {
       fecha,
       horaInicio,
       horaFin,
-      duracion
+      duracion,
+      comentario
     })
 
     const savedAppointment = await appointment.save()
@@ -329,7 +330,7 @@ appointmentsRouter.post('/', validateAppointmentData, async (req, res) => {
 appointmentsRouter.put('/:id', validateAppointmentData, async (req, res) => {
   try {
     const appointmentId = req.params.id
-    const { paciente, odontologo, fecha, horaInicio, horaFin } = req.body
+    const { paciente, odontologo, fecha, horaInicio, horaFin, comentario } = req.body
 
     console.log(`Intentando actualizar cita ${appointmentId}:`, req.body)
 
@@ -355,6 +356,7 @@ appointmentsRouter.put('/:id', validateAppointmentData, async (req, res) => {
     existingAppointment.fecha = new Date(fecha)
     existingAppointment.horaInicio = horaInicio
     existingAppointment.horaFin = horaFin
+    existingAppointment.comentario = comentario
 
     const updatedAppointment = await existingAppointment.save()
     console.log('Cita actualizada exitosamente:', updatedAppointment)
