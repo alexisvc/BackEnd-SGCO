@@ -7,15 +7,16 @@ const Appointment = require('./models/Appointment') // Asegúrate que la ruta se
 
 // Función para obtener las citas del día siguiente
 const getTomorrowAppointments = async () => {
-  const tomorrowStart = dayjs().utc().add(1, 'day').startOf('day').toDate() // Inicio del día de mañana en UTC
-  const tomorrowEnd = dayjs().utc().add(1, 'day').endOf('day').toDate() // Fin del día de mañana en UTC
+  // Solo obtener la fecha de mañana (sin hora)
+  const tomorrowDate = dayjs().utc().add(1, 'day').format('YYYY-MM-DD') // Fecha de mañana en formato YYYY-MM-DD
 
-  console.log(`Buscando citas entre: ${tomorrowStart} y ${tomorrowEnd}`) // Verifica las fechas que se están buscando
+  console.log(`Buscando citas para la fecha: ${tomorrowDate}`) // Imprimir la fecha que se está buscando
 
+  // Buscar citas cuyo campo "fecha" coincida con la fecha de mañana
   const appointments = await Appointment.find({
+    // Convertimos la fecha en la base de datos a formato YYYY-MM-DD y comparamos con tomorrowDate
     fecha: {
-      $gte: tomorrowStart,
-      $lt: tomorrowEnd
+      $eq: tomorrowDate
     }
   }).populate('paciente', 'nombrePaciente telefono apiKey')
     .populate('odontologo', 'nombreOdontologo')
@@ -48,10 +49,13 @@ const sendAppointmentReminders = async () => {
     appointments.forEach(async (appointment) => {
       const patient = appointment.paciente
 
-      // Imprimir los detalles de la cita que está siendo verificada
-      console.log(`Verificando cita de ${patient.nombrePaciente} con el ${appointment.odontologo.nombreOdontologo} a las ${appointment.horaInicio}.`)
+      // Tomamos solo la parte de la fecha (sin la hora) en UTC
+      const appointmentDate = dayjs(appointment.fecha).utc().format('YYYY-MM-DD')
 
-      const message = `Hola ${patient.nombrePaciente}, tienes una cita con el ${appointment.odontologo.nombreOdontologo} mañana a las ${appointment.horaInicio}. Por favor, no faltes.`
+      // Imprimir los detalles de la cita que está siendo verificada
+      console.log(`Verificando cita de ${patient.nombrePaciente} con el ${appointment.odontologo.nombreOdontologo}. Fecha (solo fecha en UTC): ${appointmentDate}.`)
+
+      const message = `Hola ${patient.nombrePaciente}, tienes una cita con el ${appointment.odontologo.nombreOdontologo} el ${appointmentDate} a las ${appointment.horaInicio}. Por favor, no faltes.`
 
       if (patient.telefono && patient.apiKey) {
         await sendWhatsAppMessage(patient.telefono, message, patient.apiKey)
