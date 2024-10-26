@@ -1,3 +1,4 @@
+// models/TreatmentPlan.js
 const mongoose = require('mongoose')
 
 const treatmentPlanSchema = new mongoose.Schema({
@@ -24,6 +25,19 @@ const treatmentPlanSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Patient',
     required: true
+  },
+  presupuesto: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Budget',
+    required: true
+  },
+  procedimiento: {
+    type: mongoose.Schema.Types.ObjectId,
+    required: true
+  },
+  fase: {
+    type: mongoose.Schema.Types.ObjectId,
+    required: true
   }
 })
 
@@ -36,5 +50,4 @@ treatmentPlanSchema.set('toJSON', {
 })
 
 const TreatmentPlan = mongoose.model('TreatmentPlan', treatmentPlanSchema)
-
 module.exports = TreatmentPlan
