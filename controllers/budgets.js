@@ -227,42 +227,55 @@ budgetsRouter.delete('/:id', async (req, res) => {
 })
 
 // Eliminar un procedimiento
+// controllers/budgets.js
 budgetsRouter.delete('/:budgetId/procedimientos/:procedimientoId', async (req, res) => {
   try {
-    const budget = await Budget.findById(req.params.budgetId)
+    const budget = await Budget.findById(req.params.budgetId);
     if (!budget) {
-      return res.status(404).json({ error: 'Presupuesto no encontrado' })
+      return res.status(404).json({ error: 'Presupuesto no encontrado' });
     }
 
-    budget.procedimientos.id(req.params.procedimientoId).remove()
-    await budget.save()
-    
-    res.status(204).end()
+    const procedimiento = budget.procedimientos.find(proc => proc.id === req.params.procedimientoId);
+    if (!procedimiento) {
+      return res.status(404).json({ error: 'Procedimiento no encontrado' });
+    }
+
+    budget.procedimientos.pull(procedimiento);
+    await budget.save();
+
+    res.status(204).end();
   } catch (error) {
-    res.status(500).json({ error: 'Error al eliminar el procedimiento' })
+    console.error('Error al eliminar el procedimiento:', error);
+    res.status(500).json({ error: 'Error al eliminar el procedimiento' });
   }
-})
+});
 
 // Eliminar una fase
 budgetsRouter.delete('/:budgetId/procedimientos/:procedimientoId/fases/:faseId', async (req, res) => {
   try {
-    const budget = await Budget.findById(req.params.budgetId)
+    const budget = await Budget.findById(req.params.budgetId);
     if (!budget) {
-      return res.status(404).json({ error: 'Presupuesto no encontrado' })
+      return res.status(404).json({ error: 'Presupuesto no encontrado' });
     }
 
-    const procedimiento = budget.procedimientos.id(req.params.procedimientoId)
+    const procedimiento = budget.procedimientos.id(req.params.procedimientoId);
     if (!procedimiento) {
-      return res.status(404).json({ error: 'Procedimiento no encontrado' })
+      return res.status(404).json({ error: 'Procedimiento no encontrado' });
     }
 
-    procedimiento.fases.id(req.params.faseId).remove()
-    await budget.save()
-    
-    res.status(204).end()
+    const fase = procedimiento.fases.id(req.params.faseId);
+    if (!fase) {
+      return res.status(404).json({ error: 'Fase no encontrada' });
+    }
+
+    procedimiento.fases.pull(fase);
+    await budget.save();
+
+    res.status(204).end();
   } catch (error) {
-    res.status(500).json({ error: 'Error al eliminar la fase' })
+    console.error('Error al eliminar la fase:', error);
+    res.status(500).json({ error: 'Error al eliminar la fase' });
   }
-})
+});
 
 module.exports = budgetsRouter
