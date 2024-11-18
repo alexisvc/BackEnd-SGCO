@@ -8,6 +8,7 @@ const notFound = require('./middleware/notFound')
 const handleErrors = require('./middleware/handleErrors')
 const { scheduleDailyReminders } = require('./reminderScheduler') // Importar el cron job
 
+// Importar controladores
 const usersRouter = require('./controllers/users')
 const patientsRouter = require('./controllers/patients')
 const medicalRecordsRouter = require('./controllers/medicalRecords')
@@ -24,6 +25,7 @@ const disfuncionMandibularRouter = require('./controllers/disfuncionMandibular')
 const consentimientoRouter = require('./controllers/consentimiento')
 const odontologoRouter = require('./controllers/odontologo')
 const appointmentsRouter = require('./controllers/appointments')
+const budgetsRouter = require('./controllers/budgets')
 
 app.use(cors())
 app.use(express.json())
@@ -34,6 +36,7 @@ app.get('/', (req, res) => {
 
 // uploads
 app.use('/uploads', express.static('uploads'))
+
 // Rutas para usuarios
 app.use('/api/users', usersRouter)
 // Rutas para pacientes
@@ -64,8 +67,11 @@ app.use('/api/disfuncion-mandibular', disfuncionMandibularRouter)
 app.use('/api/consentimiento', consentimientoRouter)
 // Rutas para odontólogo
 app.use('/api/odontologos', odontologoRouter)
-//
+// Rutas para Citas
 app.use('/api/appointments', appointmentsRouter)
+// Rutas para Presupuestos
+app.use('/api/budgets', budgetsRouter) // Nueva ruta para presupuestos
+
 // Middleware para manejar errores 404
 app.use(notFound)
 // Middleware para manejar errores generales
