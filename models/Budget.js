@@ -28,7 +28,7 @@ const faseSchema = new mongoose.Schema({
   },
   descripcion: {
     type: String,
-    required: true
+    //required: true
   },
   procedimientos: [procedimientoSchema],
   total: {
@@ -50,7 +50,7 @@ const budgetSchema = new mongoose.Schema({
   },
   especialidad: {
     type: String,
-    required: true
+    //required: true
   },
   fases: [faseSchema],
   totalGeneral: {

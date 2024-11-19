@@ -195,6 +195,29 @@ budgetsRouter.patch('/:id/fase/:faseIndex/procedimientos', async (req, res) => {
       res.status(500).json({ error: 'Error al agregar el procedimiento' });
     }
   });
+
+  // Actualizar un presupuesto
+  budgetsRouter.put('/:id', validateBudgetData, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const budgetData = req.body;
+
+      const updatedBudget = await Budget.findByIdAndUpdate(
+        id,
+        budgetData,
+        { new: true, runValidators: true }
+      ).populate('paciente', 'nombrePaciente numeroCedula');
+
+      if (!updatedBudget) {
+        return res.status(404).json({ error: 'Presupuesto no encontrado' });
+      }
+
+      res.json(updatedBudget);
+    } catch (error) {
+      console.error('Error al actualizar presupuesto:', error);
+      res.status(500).json({ error: 'Error al actualizar el presupuesto' });
+    }
+  });
   
   // Eliminar un presupuesto
   budgetsRouter.delete('/:id', async (req, res) => {
