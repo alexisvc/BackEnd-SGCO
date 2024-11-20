@@ -26,6 +26,7 @@ const consentimientoRouter = require('./controllers/consentimiento')
 const odontologoRouter = require('./controllers/odontologo')
 const appointmentsRouter = require('./controllers/appointments')
 const budgetsRouter = require('./controllers/budgets')
+const paymentsRouter = require('./controllers/payments');
 
 app.use(cors())
 app.use(express.json())
@@ -71,6 +72,9 @@ app.use('/api/odontologos', odontologoRouter)
 app.use('/api/appointments', appointmentsRouter)
 // Rutas para Presupuestos
 app.use('/api/budgets', budgetsRouter) // Nueva ruta para presupuestos
+// Rutas para Pagos
+app.use('/api/payments', paymentsRouter);
+
 
 // Middleware para manejar errores 404
 app.use(notFound)

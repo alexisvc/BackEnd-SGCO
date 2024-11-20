@@ -16,7 +16,7 @@ const procedimientoSchema = new mongoose.Schema({
     min: 0
   },
   costoTotal: {
-    type: Number,
+    type: Number
     // Se calculará automáticamente
   }
 });
@@ -27,14 +27,18 @@ const faseSchema = new mongoose.Schema({
     required: true
   },
   descripcion: {
-    type: String,
-    //required: true
+    type: String
   },
   procedimientos: [procedimientoSchema],
   total: {
     type: Number,
     default: 0
     // Se calculará automáticamente
+  },
+  estadoPago: {
+    type: String,
+    enum: ['pendiente', 'parcial', 'completado'],
+    default: 'pendiente'
   }
 });
 
@@ -50,13 +54,32 @@ const budgetSchema = new mongoose.Schema({
   },
   especialidad: {
     type: String,
-    //required: true
+    required: true
   },
   fases: [faseSchema],
   totalGeneral: {
     type: Number,
     default: 0
     // Se calculará automáticamente
+  },
+  totalGeneral: {
+    type: Number,
+    default: 0
+  },
+  totalPagado: {
+    type: Number,
+    default: 0
+  },
+  saldoPendienteTotal: {
+    type: Number,
+    default: function() {
+      return this.totalGeneral;
+    }
+  },
+  estadoPagoGeneral: {
+    type: String,
+    enum: ['pendiente', 'parcial', 'completado'],
+    default: 'pendiente'
   },
   estado: {
     type: String,
@@ -84,6 +107,26 @@ budgetSchema.pre('save', function(next) {
 
   next();
 });
+
+// Añadir método para actualizar pagos
+budgetSchema.methods.actualizarPagosFase = async function(faseIndex, montoPago) {
+  const fase = this.fases[faseIndex];
+  
+  // Actualizar la fase específica
+  fase.totalPagado = (fase.totalPagado || 0) + montoPago;
+  fase.saldoPendiente = fase.total - fase.totalPagado;
+  fase.estadoPago = fase.totalPagado === 0 ? 'pendiente' :
+                    fase.totalPagado >= fase.total ? 'completado' : 'parcial';
+
+  // Actualizar totales generales
+  const totalPagadoGeneral = this.fases.reduce((sum, f) => sum + (f.totalPagado || 0), 0);
+  this.totalPagado = totalPagadoGeneral;
+  this.saldoPendienteTotal = this.totalGeneral - totalPagadoGeneral;
+  this.estadoPagoGeneral = totalPagadoGeneral === 0 ? 'pendiente' :
+                          totalPagadoGeneral >= this.totalGeneral ? 'completado' : 'parcial';
+
+  return this.save();
+};
 
 const Budget = mongoose.model('Budget', budgetSchema);
 
