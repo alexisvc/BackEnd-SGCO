@@ -196,4 +196,26 @@ financialReportsRouter.post('/', async (req, res) => {
   }
 });
 
+// Eliminar un reporte financiero
+financialReportsRouter.delete('/:id', async (req, res) => {
+    try {
+      const reportId = req.params.id;
+  
+      const deletedReport = await FinancialReport.findByIdAndDelete(reportId);
+      
+      if (!deletedReport) {
+        return res.status(404).json({ error: 'Reporte financiero no encontrado' });
+      }
+  
+      // Devolver 204 (No Content) para indicar eliminación exitosa
+      res.status(204).end();
+    } catch (error) {
+      console.error('Error al eliminar reporte financiero:', error);
+      res.status(500).json({ 
+        error: 'Error al eliminar el reporte financiero',
+        details: error.message 
+      });
+    }
+  });
+
 module.exports = financialReportsRouter;
