@@ -1,6 +1,7 @@
 const paymentsRouter = require('express').Router();
 const Payment = require('../models/Payment');
 const Budget = require('../models/Budget');
+const FinancialReport = require('../models/FinancialReport');
 
 // Obtener todos los pagos de un presupuesto con resumen
 paymentsRouter.get('/budget/:budgetId/summary', async (req, res) => {
@@ -140,6 +141,17 @@ paymentsRouter.post('/budget/:budgetId/fase/:faseIndex/pago', async (req, res) =
 
     const updatedPaymentPhase = await paymentPhase.save();
 
+    // Crear registro financiero
+    const financialReport = new FinancialReport({
+        presupuesto: budgetId,
+        paciente: budget.paciente._id,
+        monto,
+        metodoPago,
+        conceptoPago: `Pago de fase ${parseInt(faseIndex) + 1}: ${descripcion}`
+      });
+
+    await financialReport.save();
+
     // Actualizar el estado del presupuesto
     const allPayments = await Payment.find({ budget: budgetId });
     const totalPagado = allPayments.reduce((sum, phase) => 
@@ -178,6 +190,14 @@ paymentsRouter.patch('/budget/:budgetId/fase/:faseIndex/pago/:pagoId/anular', as
     if (!pago) {
       return res.status(404).json({ error: 'Pago no encontrado' });
     }
+
+    // Anular el registro financiero
+    await FinancialReport.findOneAndDelete({
+        presupuesto: budgetId,
+        monto: pago.monto,
+        metodoPago: pago.metodoPago,
+        fecha: pago.fecha
+      });
 
     // Anular el pago
     pago.anulado = true;

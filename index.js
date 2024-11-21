@@ -27,6 +27,7 @@ const odontologoRouter = require('./controllers/odontologo')
 const appointmentsRouter = require('./controllers/appointments')
 const budgetsRouter = require('./controllers/budgets')
 const paymentsRouter = require('./controllers/payments');
+const financialReportsRouter = require('./controllers/financialReports');
 
 app.use(cors())
 app.use(express.json())
@@ -74,6 +75,8 @@ app.use('/api/appointments', appointmentsRouter)
 app.use('/api/budgets', budgetsRouter) // Nueva ruta para presupuestos
 // Rutas para Pagos
 app.use('/api/payments', paymentsRouter);
+// Rutas para Reporte Consoldiado
+app.use('/api/financial-reports', financialReportsRouter);
 
 
 // Middleware para manejar errores 404
