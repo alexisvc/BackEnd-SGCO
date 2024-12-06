@@ -3,130 +3,129 @@ const treatmentPlansRouter = express.Router()
 const TreatmentPlan = require('../models/TreatmentPlan')
 const Patient = require('../models/Patient')
 
-// Route to get all treatment plans
+// Obtener todos los planes de tratamiento
 treatmentPlansRouter.get('/', async (req, res) => {
   try {
-    const treatmentPlans = await TreatmentPlan.find().populate('paciente', { nombrePaciente: 1, numeroCedula: 1 })
-    res.json(treatmentPlans)
+    const treatmentPlans = await TreatmentPlan.find()
+      .populate('paciente', { nombrePaciente: 1, numeroCedula: 1 });
+    res.json(treatmentPlans);
   } catch (error) {
-    console.error(error)
-    res.status(500).json({ error: 'Internal Server Error' })
+    console.error('Error al obtener planes de tratamiento:', error);
+    res.status(500).json({ error: 'Error al obtener los planes de tratamiento' });
   }
-})
+});
 
-// Route to get a treatment plan by ID
+// Obtener planes de tratamiento por ID de paciente
+treatmentPlansRouter.get('/patient/:patientId', async (req, res) => {
+  try {
+    const treatments = await TreatmentPlan.find({ 
+      paciente: req.params.patientId 
+    }).populate('paciente', { nombrePaciente: 1, numeroCedula: 1 });
+    res.json(treatments);
+  } catch (error) {
+    console.error('Error al obtener planes del paciente:', error);
+    res.status(500).json({ error: 'Error al obtener los planes del paciente' });
+  }
+});
+
+// Obtener un plan específico por ID
 treatmentPlansRouter.get('/:id', async (req, res) => {
   try {
-    const treatmentPlanId = req.params.id
-    const treatmentPlan = await TreatmentPlan.findById(treatmentPlanId).populate('paciente', { nombrePaciente: 1, numeroCedula: 1 })
-    if (!treatmentPlan) {
-      return res.status(404).json({ error: 'Treatment plan not found' })
+    const treatment = await TreatmentPlan.findById(req.params.id)
+      .populate('paciente', { nombrePaciente: 1, numeroCedula: 1 });
+    
+    if (!treatment) {
+      return res.status(404).json({ error: 'Plan de tratamiento no encontrado' });
     }
-    res.json(treatmentPlan)
+    
+    res.json(treatment);
   } catch (error) {
-    console.error(error)
-    res.status(500).json({ error: 'Internal Server Error' })
+    console.error('Error al obtener plan de tratamiento:', error);
+    res.status(500).json({ error: 'Error al obtener el plan de tratamiento' });
   }
-})
-// Route to get treatments by patientId
-treatmentPlansRouter.get('/patient/:patientId', async (req, res) => {
-  const { patientId } = req.params
+});
 
-  try {
-    const treatments = await TreatmentPlan.find({ paciente: patientId }).populate('paciente', { nombrePaciente: 1, numeroCedula: 1 })
-    res.json(treatments)
-  } catch (error) {
-    console.error(error)
-    res.status(500).json({ error: 'Internal Server Error' })
-  }
-})
-
-// Route to create a new treatment plan
+// Crear nuevo plan de tratamiento
 treatmentPlansRouter.post('/', async (req, res) => {
+  console.log('Received treatment data:', req.body);
   try {
-    const { cita, actividadPlanTrat, fechaPlanTrat, montoAbono, paciente } = req.body
+    const { cita, actividadPlanTrat, fechaPlanTrat, montoAbono, paciente } = req.body;
 
-    // Validate that the patient exists
-    const existingPatient = await Patient.findById(paciente)
+    // Verificar que existe el paciente
+    const existingPatient = await Patient.findById(paciente);
     if (!existingPatient) {
-      return res.status(400).json({ error: 'Patient not found' })
+      return res.status(404).json({ error: 'Paciente no encontrado' });
     }
 
-    const treatmentPlan = new TreatmentPlan({
+    const treatment = new TreatmentPlan({
       cita,
       actividadPlanTrat,
       fechaPlanTrat,
       montoAbono,
       paciente
-    })
+    });
 
-    const savedTreatmentPlan = await treatmentPlan.save()
+    const savedTreatment = await treatment.save();
+    
+    // Agregar referencia al paciente
+    existingPatient.treatmentPlans = existingPatient.treatmentPlans.concat(savedTreatment._id);
+    await existingPatient.save();
 
-    // Add the treatment plan reference to the patient
-    existingPatient.treatmentPlans = existingPatient.treatmentPlans.concat(savedTreatmentPlan._id)
-    await existingPatient.save()
+    const populatedTreatment = await TreatmentPlan.findById(savedTreatment._id)
+      .populate('paciente', { nombrePaciente: 1, numeroCedula: 1 });
 
-    res.status(201).json(savedTreatmentPlan)
+    res.status(201).json(populatedTreatment);
   } catch (error) {
-    console.error(error)
-    res.status(500).json({ error: 'Internal Server Error' })
+    console.error('Error al crear plan de tratamiento:', error);
+    res.status(500).json({ error: 'Error al crear el plan de tratamiento' });
   }
-})
+});
 
-// Route to update a treatment plan by ID
+// Actualizar plan de tratamiento
 treatmentPlansRouter.put('/:id', async (req, res) => {
   try {
-    const treatmentPlanId = req.params.id
-    const { cita, actividadPlanTrat, fechaPlanTrat, montoAbono, paciente } = req.body
+    const { cita, actividadPlanTrat, fechaPlanTrat, montoAbono, estado } = req.body;
 
-    // Validate that the patient exists if updating the patient field
-    if (paciente) {
-      const existingPatient = await Patient.findById(paciente)
-      if (!existingPatient) {
-        return res.status(400).json({ error: 'Patient not found' })
-      }
-    }
-
-    const updatedTreatmentPlan = await TreatmentPlan.findByIdAndUpdate(
-      treatmentPlanId,
-      { cita, actividadPlanTrat, fechaPlanTrat, montoAbono, paciente },
+    const updatedTreatment = await TreatmentPlan.findByIdAndUpdate(
+      req.params.id,
+      { cita, actividadPlanTrat, fechaPlanTrat, montoAbono, estado },
       { new: true, runValidators: true }
-    )
+    ).populate('paciente', { nombrePaciente: 1, numeroCedula: 1 });
 
-    if (!updatedTreatmentPlan) {
-      return res.status(404).json({ error: 'Treatment plan not found' })
+    if (!updatedTreatment) {
+      return res.status(404).json({ error: 'Plan de tratamiento no encontrado' });
     }
 
-    res.json(updatedTreatmentPlan)
+    res.json(updatedTreatment);
   } catch (error) {
-    console.error(error)
-    res.status(500).json({ error: 'Internal Server Error' })
+    console.error('Error al actualizar plan de tratamiento:', error);
+    res.status(500).json({ error: 'Error al actualizar el plan de tratamiento' });
   }
-})
+});
 
-// Route to delete a treatment plan by ID
+// Eliminar plan de tratamiento
 treatmentPlansRouter.delete('/:id', async (req, res) => {
   try {
-    const treatmentPlanId = req.params.id
-
-    const treatmentPlan = await TreatmentPlan.findById(treatmentPlanId)
-    if (!treatmentPlan) {
-      return res.status(404).json({ error: 'Treatment plan not found' })
+    const treatment = await TreatmentPlan.findById(req.params.id);
+    if (!treatment) {
+      return res.status(404).json({ error: 'Plan de tratamiento no encontrado' });
     }
 
-    const patient = await Patient.findById(treatmentPlan.paciente)
+    // Eliminar referencia del paciente
+    const patient = await Patient.findById(treatment.paciente);
     if (patient) {
-      patient.treatmentPlans = patient.treatmentPlans.filter(planId => planId.toString() !== treatmentPlanId)
-      await patient.save()
+      patient.treatmentPlans = patient.treatmentPlans.filter(
+        id => id.toString() !== treatment._id.toString()
+      );
+      await patient.save();
     }
 
-    await TreatmentPlan.findByIdAndDelete(treatmentPlanId)
-
-    res.status(204).end()
+    await TreatmentPlan.findByIdAndDelete(req.params.id);
+    res.status(204).end();
   } catch (error) {
-    console.error(error)
-    res.status(500).json({ error: 'Internal Server Error' })
+    console.error('Error al eliminar plan de tratamiento:', error);
+    res.status(500).json({ error: 'Error al eliminar el plan de tratamiento' });
   }
-})
+});
 
-module.exports = treatmentPlansRouter
+module.exports = treatmentPlansRouter;

@@ -24,6 +24,11 @@ const treatmentPlanSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Patient',
     required: true
+  },
+  estado: {
+    type: String,
+    enum: ['pendiente', 'en-proceso', 'completado'],
+    default: 'pendiente'
   }
 })
 

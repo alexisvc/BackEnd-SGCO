@@ -48,7 +48,7 @@ app.use('/api/medical-records', medicalRecordsRouter)
 // Rutas para login
 app.use('/api/login', loginRouter)
 // Rutas para planes de tratamiento
-app.use('/api/treatment-plans', treatmentPlansRouter)
+app.use('/api/treatment-plans', treatmentPlansRouter);
 // Rutas para cuadros de evolución
 app.use('/api/evolution-charts', evolutionChartsRouter)
 // Rutas para tratamientos de endodoncia
