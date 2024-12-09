@@ -88,13 +88,6 @@ paymentsRouter.post('/budget/:budgetId/fase/:faseIndex/pago', async (req, res) =
       return res.status(404).json({ error: 'Presupuesto no encontrado' });
     }
 
-    // Validar que el presupuesto esté aceptado
-    if (budget.estado !== 'aceptado') {
-      return res.status(400).json({ 
-        error: 'Solo se pueden registrar pagos para presupuestos aceptados' 
-      });
-    }
-
     // Buscar o crear el registro de pagos para la fase
     
     let paymentPhase = await Payment.findOne({ 
@@ -214,6 +207,57 @@ paymentsRouter.patch('/budget/:budgetId/fase/:faseIndex/pago/:pagoId/anular', as
   } catch (error) {
     console.error('Error al anular pago:', error);
     res.status(500).json({ error: 'Error al anular el pago' });
+  }
+});
+
+// Eliminar todos los pagos de un presupuesto
+paymentsRouter.delete('/budget/:budgetId/pagos', async (req, res) => {
+  try {
+    const { budgetId } = req.params;
+
+    // Verificar que existe el presupuesto
+    const budget = await Budget.findById(budgetId);
+    if (!budget) {
+      return res.status(404).json({ error: 'Presupuesto no encontrado' });
+    }
+
+    // Eliminar todos los registros financieros asociados
+    await FinancialReport.deleteMany({ presupuesto: budgetId });
+
+    // Eliminar todos los pagos
+    await Payment.deleteMany({ budget: budgetId });
+
+    // Actualizar el presupuesto
+    budget.totalPagado = 0;
+    budget.saldoPendienteTotal = budget.totalGeneral;
+    budget.estadoPagoGeneral = 'pendiente';
+    await budget.save();
+
+    res.json({ message: 'Todos los pagos han sido eliminados exitosamente' });
+  } catch (error) {
+    console.error('Error al eliminar los pagos:', error);
+    res.status(500).json({ error: 'Error al eliminar los pagos' });
+  }
+});
+
+// Eliminar todos los pagos del sistema
+paymentsRouter.delete('/deleteAll', async (req, res) => {
+  try {
+    // Eliminar la colección de pagos
+    await Payment.collection.drop();
+    
+    // Eliminar todos los registros financieros relacionados
+    await FinancialReport.collection.drop();
+
+    res.json({ 
+      message: 'Todas las colecciones de pagos han sido eliminadas exitosamente'
+    });
+  } catch (error) {
+    console.error('Error al eliminar las colecciones:', error);
+    res.status(500).json({ 
+      error: 'Error al eliminar las colecciones',
+      detalles: error.message 
+    });
   }
 });
 

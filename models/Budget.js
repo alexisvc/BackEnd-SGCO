@@ -80,11 +80,6 @@ const budgetSchema = new mongoose.Schema({
     type: String,
     enum: ['pendiente', 'parcial', 'completado'],
     default: 'pendiente'
-  },
-  estado: {
-    type: String,
-    enum: ['borrador', 'emitido', 'aceptado', 'rechazado'],
-    default: 'borrador'
   }
 }, {
   timestamps: true
