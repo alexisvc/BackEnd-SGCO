@@ -14,9 +14,7 @@ const treatmentPlanSchema = new mongoose.Schema({
   fechaPlanTrat: {
     type: Date,
     required: true
-  },
-  horaInicio: String,  
-  horaFin: String,     
+  },  
   montoAbono: {
     type: Number,
     required: true,
