@@ -17,7 +17,7 @@ const treatmentPlanSchema = new mongoose.Schema({
   },  
   montoAbono: {
     type: Number,
-    required: true,
+    required: false,
     min: 0
   },
   paciente: {
