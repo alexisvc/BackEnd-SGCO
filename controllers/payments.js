@@ -77,6 +77,42 @@ paymentsRouter.get('/budget/:budgetId/summary', async (req, res) => {
     }
   });
 
+
+paymentsRouter.post('/budget/:budgetId/fase/:faseIndex/treatment/:treatmentId/pago', async (req, res) => {
+  try {
+    const { budgetId, faseIndex, treatmentId } = req.params;
+    const paymentData = req.body;
+ 
+    const budget = await Budget.findById(budgetId);
+    const treatment = await TreatmentPlan.findById(treatmentId);
+ 
+    if (!budget || !treatment) {
+      return res.status(404).json({ error: 'Presupuesto o tratamiento no encontrado' });
+    }
+ 
+    let paymentPhase = await Payment.findOne({ 
+      budget: budgetId,
+      faseIndex: parseInt(faseIndex)
+    });
+ 
+    if (!paymentPhase) {
+      paymentPhase = await Payment.initializeForBudgetPhase(budget, parseInt(faseIndex));
+    }
+ 
+    await paymentPhase.registrarPago({
+      ...paymentData,
+      tratamiento: treatmentId
+    });
+ 
+    // Actualizar el presupuesto
+    await budget.actualizarPagosFase(parseInt(faseIndex), paymentData.monto);
+ 
+    res.json(paymentPhase);
+  } catch (error) {
+    res.status(500).json({ error: 'Error al registrar el pago' });
+  }
+ });
+
 // Registrar nuevo pago
 paymentsRouter.post('/budget/:budgetId/fase/:faseIndex/pago', async (req, res) => {
   try {

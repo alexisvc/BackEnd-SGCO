@@ -1,5 +1,6 @@
 const budgetsRouter = require('express').Router();
 const Budget = require('../models/Budget');
+const TreatmentPlan = require('../models/TreatmentPlan');
 
 // Middleware para validar presupuesto
 const validateBudgetData = (req, res, next) => {
@@ -7,7 +8,7 @@ const validateBudgetData = (req, res, next) => {
   console.log('Body recibido:', JSON.stringify(req.body, null, 2));
   console.log('Tipo de body:', typeof req.body);
 
-  const { paciente, especialidad, fases } = req.body;
+  const { paciente, especialidad, fases, treatmentPlan  } = req.body;
 
   console.log('Paciente:', paciente);
   console.log('Especialidad:', especialidad);
@@ -22,6 +23,14 @@ const validateBudgetData = (req, res, next) => {
         fases: !fases
       }
     });
+  }
+
+  // Si viene un treatmentPlan, validar que exista
+  if (treatmentPlan) {
+    const planExists = TreatmentPlan.findById(treatmentPlan);
+    if (!planExists) {
+      return res.status(404).json({ error: 'Planificación no encontrada' });
+    }
   }
 
   if (!Array.isArray(fases) || fases.length === 0) {
@@ -54,7 +63,9 @@ const validateBudgetData = (req, res, next) => {
 // Obtener todos los presupuestos
 budgetsRouter.get('/', async (req, res) => {
   try {
-    const budgets = await Budget.find().populate('paciente', 'nombrePaciente numeroCedula');
+    const budgets = await Budget.find()
+    .populate('paciente', 'nombrePaciente numeroCedula')
+    .populate('treatmentPlan');
     res.json(budgets);
   } catch (error) {
     console.error('Error al obtener presupuestos:', error);
@@ -66,8 +77,8 @@ budgetsRouter.get('/', async (req, res) => {
 budgetsRouter.get('/paciente/:pacienteId', async (req, res) => {
   try {
     const budgets = await Budget.find({ paciente: req.params.pacienteId })
-      .populate('paciente', 'nombrePaciente numeroCedula');
-    
+      .populate('paciente', 'nombrePaciente numeroCedula')
+      .populate('treatmentPlan');
     if (!budgets.length) {
       return res.status(404).json({ error: 'No se encontraron presupuestos para este paciente' });
     }
@@ -84,7 +95,7 @@ budgetsRouter.get('/:id', async (req, res) => {
     try {
       const budget = await Budget.findById(req.params.id)
         .populate('paciente', 'nombrePaciente numeroCedula')
-      
+        .populate('treatmentPlan');
       if (!budget) {
         return res.status(404).json({ error: 'Presupuesto no encontrado' });
       }
@@ -96,24 +107,155 @@ budgetsRouter.get('/:id', async (req, res) => {
     }
   });
 
+  // Nueva ruta para obtener presupuesto por planificación
+budgetsRouter.get('/treatment/:treatmentPlanId', async (req, res) => {
+  try {
+    const budget = await Budget.findOne({ treatmentPlan: req.params.treatmentPlanId })
+      .populate('paciente', 'nombrePaciente numeroCedula')
+      .populate('treatmentPlan');
+
+    if (!budget) {
+      return res.status(404).json({ error: 'Presupuesto no encontrado para esta planificación' });
+    }
+
+    res.json(budget);
+  } catch (error) {
+    res.status(500).json({ error: 'Error al obtener el presupuesto' });
+  }
+});
+
 // Crear nuevo presupuesto
 budgetsRouter.post('/', validateBudgetData, async (req, res) => {
   try {
-    const { paciente, especialidad, fases } = req.body;
+    const { paciente, especialidad, fases, treatmentPlan } = req.body;
 
     const newBudget = new Budget({
       paciente,
       especialidad,
-      fases
+      fases,
+      treatmentPlan
     });
 
     const savedBudget = await newBudget.save();
+
+
+    // Actualizar referencia en TreatmentPlan
+    if (treatmentPlan) {
+      await TreatmentPlan.findByIdAndUpdate(
+        treatmentPlan,
+        { budget: savedBudget._id }
+      );
+    }
+
     const populatedBudget = await Budget.findById(savedBudget._id)
-      .populate('paciente', 'nombrePaciente numeroCedula');
+      .populate('paciente', 'nombrePaciente numeroCedula')
+      .populate('treatmentPlan');
+
+    
+      res.status(201).json(populatedBudget);
+  } catch (error) {
+    console.error('Error al crear presupuesto:', error);
+    res.status(500).json({ error: 'Error al crear el presupuesto' });
+  }
+  
+});
+
+// Agregar un nuevo procedimiento a una fase
+budgetsRouter.post('/:id/fase/:faseIndex/procedimiento', async (req, res) => {
+  try {
+    const { id, faseIndex } = req.params;
+    const nuevoProcedimiento = req.body;
+
+    const budget = await Budget.findById(id);
+    if (!budget) {
+      return res.status(404).json({ error: 'Presupuesto no encontrado' });
+    }
+
+    if (faseIndex >= budget.fases.length) {
+      return res.status(400).json({ error: 'Índice de fase inválido' });
+    }
+
+    budget.fases[faseIndex].procedimientos.push(nuevoProcedimiento);
+    const updatedBudget = await budget.save();
+
+    res.json(updatedBudget);
+  } catch (error) {
+    console.error('Error al agregar procedimiento:', error);
+    res.status(500).json({ error: 'Error al agregar el procedimiento' });
+  }
+});
+
+budgetsRouter.post('/treatment/:treatmentId', validateBudgetData, async (req, res) => {
+  try {
+    const { treatmentId } = req.params;
+    const budgetData = req.body;
+
+    const treatment = await TreatmentPlan.findById(treatmentId);
+    if (!treatment) {
+      return res.status(404).json({ error: 'Tratamiento no encontrado' });
+    }
+
+    const newBudget = new Budget({
+      ...budgetData,
+      paciente: treatment.paciente,
+      treatmentPlan: treatmentId
+    });
+
+    const savedBudget = await newBudget.save();
+    await TreatmentPlan.findByIdAndUpdate(treatmentId, { budget: savedBudget._id });
+
+    const populatedBudget = await Budget.findById(savedBudget._id)
+      .populate('paciente')
+      .populate('treatmentPlan');
 
     res.status(201).json(populatedBudget);
   } catch (error) {
-    console.error('Error al crear presupuesto:', error);
+    res.status(500).json({ error: 'Error al crear el presupuesto' });
+  }
+});
+
+// Crear presupuesto desde una planificación
+budgetsRouter.post('/from-treatment/:treatmentPlanId', async (req, res) => {
+  try {
+    const treatment = await TreatmentPlan.findById(req.params.treatmentPlanId)
+      .populate('paciente');
+      
+    if (!treatment) {
+      return res.status(404).json({ error: 'Planificación no encontrada' });
+    }
+
+    // Verificar si ya existe un presupuesto para esta planificación
+    const existingBudget = await Budget.findOne({ treatmentPlan: treatment._id });
+    if (existingBudget) {
+      return res.status(400).json({ error: 'Ya existe un presupuesto para esta planificación' });
+    }
+
+    const budget = new Budget({
+      paciente: treatment.paciente._id,
+      especialidad: treatment.especialidad,
+      treatmentPlan: treatment._id,
+      fases: [{
+        nombre: 'Fase Principal',
+        descripcion: 'Actividades de la planificación',
+        procedimientos: treatment.actividades.map(act => ({
+          nombre: act.actividadPlanTrat,
+          numeroPiezas: 1, // Valor por defecto
+          costoPorUnidad: 0 // Se actualizará después
+        }))
+      }]
+    });
+
+    const savedBudget = await budget.save();
+    treatment.budget = savedBudget._id;
+    await treatment.save();
+
+    const populatedBudget = await Budget.findById(savedBudget._id)
+      .populate('paciente', 'nombrePaciente numeroCedula')
+      .populate('treatmentPlan');
+
+    res.status(201).json(populatedBudget);
+  } catch (error) {
+    console.error('Error al crear presupuesto desde planificación:', error);
     res.status(500).json({ error: 'Error al crear el presupuesto' });
   }
 });
@@ -171,30 +313,7 @@ budgetsRouter.patch('/:id/fase/:faseIndex/procedimientos', async (req, res) => {
     }
   });
   
-  // Agregar un nuevo procedimiento a una fase
-  budgetsRouter.post('/:id/fase/:faseIndex/procedimiento', async (req, res) => {
-    try {
-      const { id, faseIndex } = req.params;
-      const nuevoProcedimiento = req.body;
   
-      const budget = await Budget.findById(id);
-      if (!budget) {
-        return res.status(404).json({ error: 'Presupuesto no encontrado' });
-      }
-  
-      if (faseIndex >= budget.fases.length) {
-        return res.status(400).json({ error: 'Índice de fase inválido' });
-      }
-  
-      budget.fases[faseIndex].procedimientos.push(nuevoProcedimiento);
-      const updatedBudget = await budget.save();
-  
-      res.json(updatedBudget);
-    } catch (error) {
-      console.error('Error al agregar procedimiento:', error);
-      res.status(500).json({ error: 'Error al agregar el procedimiento' });
-    }
-  });
 
   // Actualizar un presupuesto
   budgetsRouter.put('/:id', validateBudgetData, async (req, res) => {
@@ -206,7 +325,16 @@ budgetsRouter.patch('/:id/fase/:faseIndex/procedimientos', async (req, res) => {
         id,
         budgetData,
         { new: true, runValidators: true }
-      ).populate('paciente', 'nombrePaciente numeroCedula');
+      ).populate('paciente', 'nombrePaciente numeroCedula')
+      .populate('treatmentPlan');
+
+      // Actualizar referencia en TreatmentPlan si cambió
+      if (budgetData.treatmentPlan) {
+        await TreatmentPlan.findByIdAndUpdate(
+          budgetData.treatmentPlan,
+          { budget: id }
+        );
+      }
 
       if (!updatedBudget) {
         return res.status(404).json({ error: 'Presupuesto no encontrado' });
@@ -219,15 +347,24 @@ budgetsRouter.patch('/:id/fase/:faseIndex/procedimientos', async (req, res) => {
     }
   });
   
+  /// Eliminar un presupuesto
   // Eliminar un presupuesto
   budgetsRouter.delete('/:id', async (req, res) => {
     try {
-      const deletedBudget = await Budget.findByIdAndDelete(req.params.id);
-      
-      if (!deletedBudget) {
+      const budget = await Budget.findById(req.params.id);
+      if (!budget) {
         return res.status(404).json({ error: 'Presupuesto no encontrado' });
       }
-      
+
+      // Si el presupuesto está vinculado a una planificación, actualizar la referencia
+      if (budget.treatmentPlan) {
+        await TreatmentPlan.findByIdAndUpdate(
+          budget.treatmentPlan,
+          { $unset: { budget: "" } }
+        );
+      }
+
+      await Budget.findByIdAndDelete(req.params.id);
       res.status(204).end();
     } catch (error) {
       console.error('Error al eliminar presupuesto:', error);

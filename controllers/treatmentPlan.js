@@ -2,12 +2,70 @@ const express = require('express')
 const treatmentPlansRouter = express.Router()
 const TreatmentPlan = require('../models/TreatmentPlan')
 const Patient = require('../models/Patient')
+const Budget = require('../models/Budget');
+
+// Middleware de validación
+const validateTreatmentPlan = (req, res, next) => {
+  const { paciente, especialidad, actividades } = req.body;
+
+  // Validar campos requeridos básicos
+  if (!paciente || !especialidad || !actividades) {
+    return res.status(400).json({
+      error: 'Todos los campos son requeridos',
+      details: {
+        paciente: !paciente,
+        especialidad: !especialidad,
+        actividades: !actividades
+      }
+    });
+  }
+
+  // Validar que actividades sea un array y tenga al menos un elemento
+  if (!Array.isArray(actividades) || actividades.length === 0) {
+    return res.status(400).json({
+      error: 'La planificación debe tener al menos una actividad'
+    });
+  }
+
+  // Validar cada actividad
+  for (const actividad of actividades) {
+    if (!actividad.cita || !actividad.actividadPlanTrat || !actividad.fechaPlanTrat) {
+      return res.status(400).json({
+        error: 'Cada actividad debe tener cita, descripción y fecha'
+      });
+    }
+
+    // Validar que la fecha sea válida
+    if (!Date.parse(actividad.fechaPlanTrat)) {
+      return res.status(400).json({
+        error: 'La fecha proporcionada no es válida'
+      });
+    }
+
+    // Validar monto de abono si existe
+    if (actividad.montoAbono && typeof actividad.montoAbono === 'number' && actividad.montoAbono < 0) {
+      return res.status(400).json({
+        error: 'El monto de abono no puede ser negativo'
+      });
+    }
+
+    // Validar estado
+    if (actividad.estado && !['pendiente', 'en-proceso', 'completado'].includes(actividad.estado)) {
+      return res.status(400).json({
+        error: 'Estado de actividad no válido'
+      });
+    }
+  }
+
+  next();
+};
 
 // Obtener todos los planes de tratamiento
 treatmentPlansRouter.get('/', async (req, res) => {
   try {
     const treatmentPlans = await TreatmentPlan.find()
-      .populate('paciente', { nombrePaciente: 1, numeroCedula: 1 });
+      .populate('paciente', { nombrePaciente: 1, numeroCedula: 1 })
+      .populate('budget');
     res.json(treatmentPlans);
   } catch (error) {
     console.error('Error al obtener planes de tratamiento:', error);
@@ -18,12 +76,17 @@ treatmentPlansRouter.get('/', async (req, res) => {
 // Obtener planes de tratamiento por ID de paciente
 treatmentPlansRouter.get('/patient/:patientId', async (req, res) => {
   try {
-    const treatments = await TreatmentPlan.find({ 
-      paciente: req.params.patientId 
-    }).populate('paciente', { nombrePaciente: 1, numeroCedula: 1 });
+    const { patientId } = req.params;
+    if (!patientId) {
+      return res.status(400).json({ error: 'ID de paciente requerido' });
+    }
+
+    const treatments = await TreatmentPlan.find({ paciente: patientId })
+      .populate('paciente')
+      .populate('budget');
     res.json(treatments);
   } catch (error) {
-    console.error('Error al obtener planes del paciente:', error);
+    console.error('Error:', error);
     res.status(500).json({ error: 'Error al obtener los planes del paciente' });
   }
 });
@@ -46,51 +109,115 @@ treatmentPlansRouter.get('/:id', async (req, res) => {
 });
 
 // Crear nuevo plan de tratamiento
-treatmentPlansRouter.post('/', async (req, res) => {
-  console.log('Received treatment data:', req.body);
+treatmentPlansRouter.post('/', validateTreatmentPlan, async (req, res) => {
   try {
-    const { cita, actividadPlanTrat, fechaPlanTrat, montoAbono, paciente } = req.body;
+    console.log('Datos recibidos en backend:', req.body);
+    const { paciente, especialidad, actividades } = req.body;
 
-    // Verificar que existe el paciente
     const existingPatient = await Patient.findById(paciente);
     if (!existingPatient) {
       return res.status(404).json({ error: 'Paciente no encontrado' });
     }
 
     const treatment = new TreatmentPlan({
-      cita,
-      actividadPlanTrat,
-      fechaPlanTrat,
-      montoAbono,
-      paciente
+      paciente,
+      especialidad,
+      actividades: actividades.map(act => ({
+        ...act,
+        estado: act.estado || 'pendiente'
+      }))
     });
 
     const savedTreatment = await treatment.save();
-    
-    // Agregar referencia al paciente
-    existingPatient.treatmentPlans = existingPatient.treatmentPlans.concat(savedTreatment._id);
-    await existingPatient.save();
-
     const populatedTreatment = await TreatmentPlan.findById(savedTreatment._id)
-      .populate('paciente', { nombrePaciente: 1, numeroCedula: 1 });
+      .populate('paciente');
 
     res.status(201).json(populatedTreatment);
   } catch (error) {
-    console.error('Error al crear plan de tratamiento:', error);
-    res.status(500).json({ error: 'Error al crear el plan de tratamiento' });
+    console.error('Error en backend:', error);
+    res.status(500).json({ error: 'Error al crear la planificación' });
+  }
+});
+
+// Agregar actividad a una planificación existente
+treatmentPlansRouter.post('/:id/actividades', async (req, res) => {
+  try {
+    const treatment = await TreatmentPlan.findById(req.params.id);
+    if (!treatment) {
+      return res.status(404).json({ error: 'Planificación no encontrada' });
+    }
+ 
+    treatment.actividades.push(req.body);
+    const updatedTreatment = await treatment.save();
+ 
+    res.json(updatedTreatment);
+  } catch (error) {
+    res.status(500).json({ error: 'Error al agregar actividad' });
+  }
+ });
+
+ // Actualizar una actividad específica
+treatmentPlansRouter.patch('/:id/actividades/:actividadIndex', async (req, res) => {
+  try {
+    const treatment = await TreatmentPlan.findById(req.params.id);
+    if (!treatment) {
+      return res.status(404).json({ error: 'Planificación no encontrada' });
+    }
+ 
+    const actividadIndex = parseInt(req.params.actividadIndex);
+    if (actividadIndex >= treatment.actividades.length) {
+      return res.status(404).json({ error: 'Actividad no encontrada' });
+    }
+ 
+    treatment.actividades[actividadIndex] = {
+      ...treatment.actividades[actividadIndex],
+      ...req.body
+    };
+ 
+    const updatedTreatment = await treatment.save();
+    res.json(updatedTreatment);
+  } catch (error) {
+    res.status(500).json({ error: 'Error al actualizar la actividad' });
+  }
+ });
+
+ treatmentPlansRouter.patch('/:id/actividades/:actividadIndex/estado', async (req, res) => {
+  try {
+    const { estado } = req.body;
+    const treatment = await TreatmentPlan.findById(req.params.id);
+    
+    if (!treatment) {
+      return res.status(404).json({ error: 'Planificación no encontrada' });
+    }
+
+    const actividadIndex = parseInt(req.params.actividadIndex);
+    if (!treatment.actividades[actividadIndex]) {
+      return res.status(404).json({ error: 'Actividad no encontrada' });
+    }
+
+    treatment.actividades[actividadIndex].estado = estado;
+    const updatedTreatment = await treatment.save();
+    
+    res.json(updatedTreatment);
+  } catch (error) {
+    console.error('Error:', error);
+    res.status(500).json({ error: 'Error al actualizar estado de la actividad' });
   }
 });
 
 // Actualizar plan de tratamiento
+/*
 treatmentPlansRouter.put('/:id', async (req, res) => {
   try {
     const { cita, actividadPlanTrat, fechaPlanTrat, montoAbono, estado } = req.body;
 
     const updatedTreatment = await TreatmentPlan.findByIdAndUpdate(
       req.params.id,
-      { cita, actividadPlanTrat, fechaPlanTrat, montoAbono, estado },
+      req.body,
+      //{ cita, actividadPlanTrat, fechaPlanTrat, montoAbono, estado },
       { new: true, runValidators: true }
-    ).populate('paciente', { nombrePaciente: 1, numeroCedula: 1 });
+    ).populate('paciente', { nombrePaciente: 1, numeroCedula: 1 })
+    .populate('budget');
 
     if (!updatedTreatment) {
       return res.status(404).json({ error: 'Plan de tratamiento no encontrado' });
@@ -102,15 +229,53 @@ treatmentPlansRouter.put('/:id', async (req, res) => {
     res.status(500).json({ error: 'Error al actualizar el plan de tratamiento' });
   }
 });
+*/
+
+treatmentPlansRouter.put('/:id', validateTreatmentPlan, async (req, res) => {
+  try {
+    const existingTreatment = await TreatmentPlan.findById(req.params.id);
+    if (!existingTreatment) {
+      return res.status(404).json({ error: 'Planificación no encontrada' });
+    }
+
+    const updatedTreatment = await TreatmentPlan.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      { new: true, runValidators: true }
+    ).populate('paciente', { nombrePaciente: 1, numeroCedula: 1 });
+
+    res.json(updatedTreatment);
+  } catch (error) {
+    console.error('Error al actualizar planificación:', error);
+    res.status(500).json({ error: 'Error al actualizar la planificación' });
+  }
+});
+
+// Eliminar una actividad
+treatmentPlansRouter.delete('/:id/actividades/:actividadIndex', async (req, res) => {
+  try {
+    const treatment = await TreatmentPlan.findById(req.params.id);
+    if (!treatment) {
+      return res.status(404).json({ error: 'Planificación no encontrada' });
+    }
+ 
+    treatment.actividades.splice(parseInt(req.params.actividadIndex), 1);
+    await treatment.save();
+    res.status(204).end();
+  } catch (error) {
+    res.status(500).json({ error: 'Error al eliminar la actividad' });
+  }
+ });
 
 // Eliminar plan de tratamiento
+// Eliminar planificación completa
 treatmentPlansRouter.delete('/:id', async (req, res) => {
   try {
     const treatment = await TreatmentPlan.findById(req.params.id);
     if (!treatment) {
-      return res.status(404).json({ error: 'Plan de tratamiento no encontrado' });
+      return res.status(404).json({ error: 'Planificación no encontrada' });
     }
-
+ 
     // Eliminar referencia del paciente
     const patient = await Patient.findById(treatment.paciente);
     if (patient) {
@@ -119,13 +284,12 @@ treatmentPlansRouter.delete('/:id', async (req, res) => {
       );
       await patient.save();
     }
-
+ 
     await TreatmentPlan.findByIdAndDelete(req.params.id);
     res.status(204).end();
   } catch (error) {
-    console.error('Error al eliminar plan de tratamiento:', error);
-    res.status(500).json({ error: 'Error al eliminar el plan de tratamiento' });
+    res.status(500).json({ error: 'Error al eliminar la planificación' });
   }
-});
+ });
 
 module.exports = treatmentPlansRouter;
