@@ -238,12 +238,17 @@ treatmentPlansRouter.put('/:id', validateTreatmentPlan, async (req, res) => {
       return res.status(404).json({ error: 'Planificación no encontrada' });
     }
 
+    const updateData = {
+      ...req.body,
+      paciente: req.body.paciente || existingTreatment.paciente
+    };
+
     const updatedTreatment = await TreatmentPlan.findByIdAndUpdate(
       req.params.id,
-      req.body,
+      updateData,
       { new: true, runValidators: true }
     ).populate('paciente', { nombrePaciente: 1, numeroCedula: 1 });
-
+    
     res.json(updatedTreatment);
   } catch (error) {
     console.error('Error al actualizar planificación:', error);
