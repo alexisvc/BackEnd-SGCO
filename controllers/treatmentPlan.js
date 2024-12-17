@@ -77,13 +77,20 @@ treatmentPlansRouter.get('/', async (req, res) => {
 treatmentPlansRouter.get('/patient/:patientId', async (req, res) => {
   try {
     const { patientId } = req.params;
-    if (!patientId) {
-      return res.status(400).json({ error: 'ID de paciente requerido' });
-    }
+    console.log('Finding treatments for patient:', patientId);
 
     const treatments = await TreatmentPlan.find({ paciente: patientId })
       .populate('paciente')
-      .populate('budget');
+      .populate({
+        path: 'budget',
+        select: '_id specialidad fases'
+      });
+
+    // Log para debug
+    treatments.forEach(t => {
+      console.log('Treatment:', t.id, 'Budget:', t.budget?._id);
+    });
+
     res.json(treatments);
   } catch (error) {
     console.error('Error:', error);

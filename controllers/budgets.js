@@ -128,6 +128,7 @@ budgetsRouter.get('/treatment/:treatmentPlanId', async (req, res) => {
 budgetsRouter.post('/', validateBudgetData, async (req, res) => {
   try {
     const { paciente, especialidad, fases, treatmentPlan } = req.body;
+    console.log('Creating budget with treatment plan:', treatmentPlan);
 
     const newBudget = new Budget({
       paciente,
@@ -138,9 +139,9 @@ budgetsRouter.post('/', validateBudgetData, async (req, res) => {
 
     const savedBudget = await newBudget.save();
 
-
-    // Actualizar referencia en TreatmentPlan
+    // Actualizar el treatment plan con el budget
     if (treatmentPlan) {
+      console.log('Updating treatment plan with budget:', savedBudget._id);
       await TreatmentPlan.findByIdAndUpdate(
         treatmentPlan,
         { budget: savedBudget._id }
@@ -151,13 +152,11 @@ budgetsRouter.post('/', validateBudgetData, async (req, res) => {
       .populate('paciente', 'nombrePaciente numeroCedula')
       .populate('treatmentPlan');
 
-    
-      res.status(201).json(populatedBudget);
+    res.status(201).json(populatedBudget);
   } catch (error) {
-    console.error('Error al crear presupuesto:', error);
+    console.error('Error creating budget:', error);
     res.status(500).json({ error: 'Error al crear el presupuesto' });
   }
-  
 });
 
 // Agregar un nuevo procedimiento a una fase
