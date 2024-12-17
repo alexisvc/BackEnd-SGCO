@@ -6,10 +6,6 @@ const treatmentPlanSchema = new mongoose.Schema({
     ref: 'Patient',
     required: true
   },
-  budget: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Budget'
-  },
   especialidad: {  
     type: String,
     required: true
@@ -39,13 +35,6 @@ const treatmentPlanSchema = new mongoose.Schema({
   }]
 })
 
-treatmentPlanSchema.set('toJSON', {
-  transform: (document, returnedObject) => {
-    returnedObject.id = returnedObject._id.toString()
-    delete returnedObject._id
-    delete returnedObject.__v
-  }
-})
 
 const TreatmentPlan = mongoose.model('TreatmentPlan', treatmentPlanSchema)
 
