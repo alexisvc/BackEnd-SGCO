@@ -74,6 +74,7 @@ treatmentPlansRouter.get('/', async (req, res) => {
 
 // Obtener planes de tratamiento por ID de paciente
 treatmentPlansRouter.get('/patient/:patientId', async (req, res) => {
+  console.log('pacienteId recibido:', req.params.pacienteId);
   try {
     const { patientId } = req.params;
     const treatments = await TreatmentPlan.find({ paciente: patientId })
@@ -89,7 +90,12 @@ treatmentPlansRouter.get('/patient/:patientId', async (req, res) => {
 // Obtener un plan específico por ID
 treatmentPlansRouter.get('/:id', async (req, res) => {
   try {
-    const treatment = await TreatmentPlan.findById(req.params.id)
+    const { id } = req.params;
+    if (!id || id === 'undefined') {
+      return res.status(400).json({ error: 'ID de planificación no válido' });
+    }
+
+    const treatment = await TreatmentPlan.findById(id)
       .populate('paciente', { nombrePaciente: 1, numeroCedula: 1 });
     
     if (!treatment) {
