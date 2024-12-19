@@ -131,8 +131,8 @@ budgetsRouter.get('/treatment/:treatmentPlanId', async (req, res) => {
 budgetsRouter.post('/', validateBudgetData, async (req, res) => {
   try {
     const { paciente, especialidad, fases, treatmentPlan } = req.body;
-    console.log('Creating budget with treatment plan:', treatmentPlan);
-
+    //console.log('Creating budget with treatment plan:', treatmentPlan);
+    console.log('Received treatmentPlan:', treatmentPlan); // Debug
     
 
     const newBudget = new Budget({
@@ -153,7 +153,7 @@ budgetsRouter.post('/', validateBudgetData, async (req, res) => {
       treatment.budget = savedBudget._id;
       await treatment.save();
     }
-    
+
     const populatedBudget = await Budget.findById(savedBudget._id)
       .populate('paciente', 'nombrePaciente numeroCedula')
       .populate('treatmentPlan');
