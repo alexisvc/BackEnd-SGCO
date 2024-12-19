@@ -51,7 +51,7 @@ const budgetSchema = new mongoose.Schema({
   treatmentPlan: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'TreatmentPlan',
-    required: true
+    //required: true
   },
   fecha: {
     type: Date,

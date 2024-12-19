@@ -98,6 +98,7 @@ budgetsRouter.get('/:id', async (req, res) => {
       const budget = await Budget.findById(req.params.id)
         .populate('paciente', 'nombrePaciente numeroCedula')
         .populate('treatmentPlan');
+        console.log('Found budget:', budget);
       if (!budget) {
         return res.status(404).json({ error: 'Presupuesto no encontrado' });
       }
@@ -132,6 +133,8 @@ budgetsRouter.post('/', validateBudgetData, async (req, res) => {
     const { paciente, especialidad, fases, treatmentPlan } = req.body;
     console.log('Creating budget with treatment plan:', treatmentPlan);
 
+    
+
     const newBudget = new Budget({
       paciente,
       especialidad,
@@ -140,6 +143,17 @@ budgetsRouter.post('/', validateBudgetData, async (req, res) => {
     });
 
     const savedBudget = await newBudget.save();
+
+    // Si viene de una planificación, actualizar la planificación
+    if (treatmentPlan) {
+      const treatment = await TreatmentPlan.findById(treatmentPlan);
+      if (!treatment) {
+        return res.status(404).json({ error: 'Planificación no encontrada' });
+      }
+      treatment.budget = savedBudget._id;
+      await treatment.save();
+    }
+    
     const populatedBudget = await Budget.findById(savedBudget._id)
       .populate('paciente', 'nombrePaciente numeroCedula')
       .populate('treatmentPlan');
