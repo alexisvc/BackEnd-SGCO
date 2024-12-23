@@ -110,9 +110,6 @@ budgetSchema.pre('save', function(next) {
     if (!treatment) {
       throw new Error('Planificación no encontrada');
     }
-    if (treatment.especialidad !== this.especialidad) {
-      throw new Error('La especialidad del presupuesto debe coincidir con la planificación');
-    }
   }
 
   next();
