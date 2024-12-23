@@ -28,6 +28,7 @@ const appointmentsRouter = require('./controllers/appointments')
 const budgetsRouter = require('./controllers/budgets')
 const paymentsRouter = require('./controllers/payments');
 const financialReportsRouter = require('./controllers/financialReports');
+const contractPlansRouter = require('./controllers/contractPlans');
 
 app.use(cors())
 app.use(express.json())
@@ -38,6 +39,9 @@ app.get('/', (req, res) => {
 
 // uploads
 app.use('/uploads', express.static('uploads'))
+
+// Carpeta para los contratos  
+app.use('/uploads/contracts', express.static('uploads/contracts'))
 
 // Rutas para usuarios
 app.use('/api/users', usersRouter)
@@ -77,6 +81,8 @@ app.use('/api/budgets', budgetsRouter) // Nueva ruta para presupuestos
 app.use('/api/payments', paymentsRouter);
 // Rutas para Reporte Consoldiado
 app.use('/api/financial-reports', financialReportsRouter);
+// Rutas para Contrato Planificacion
+app.use('/api/contracts', contractPlansRouter);
 
 
 // Middleware para manejar errores 404

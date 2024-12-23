@@ -1,4 +1,5 @@
 const express = require('express')
+const mongoose = require('mongoose');
 const treatmentPlansRouter = express.Router()
 const TreatmentPlan = require('../models/TreatmentPlan')
 const Patient = require('../models/Patient')
@@ -74,7 +75,7 @@ treatmentPlansRouter.get('/', async (req, res) => {
 
 // Obtener planes de tratamiento por ID de paciente
 treatmentPlansRouter.get('/patient/:patientId', async (req, res) => {
-  console.log('pacienteId recibido:', req.params.pacienteId);
+  console.log('pacienteId recibido:', req.params.patientId);
   try {
     const { patientId } = req.params;
     const treatments = await TreatmentPlan.find({ paciente: patientId })
@@ -88,15 +89,26 @@ treatmentPlansRouter.get('/patient/:patientId', async (req, res) => {
 });
 
 // Obtener un plan específico por ID
+// Obtener un plan específico por ID
 treatmentPlansRouter.get('/:id', async (req, res) => {
   try {
     const { id } = req.params;
+    console.log('ID recibido:', id, 'Tipo:', typeof id);
+
     if (!id || id === 'undefined') {
       return res.status(400).json({ error: 'ID de planificación no válido' });
     }
 
+    // Validar que el ID tenga el formato correcto de MongoDB
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      console.log('ID no válido para MongoDB:', id);
+      return res.status(400).json({ error: 'Formato de ID no válido' });
+    }
+
     const treatment = await TreatmentPlan.findById(id)
       .populate('paciente', { nombrePaciente: 1, numeroCedula: 1 });
+    
+    console.log('Treatment encontrado:', treatment);
     
     if (!treatment) {
       return res.status(404).json({ error: 'Plan de tratamiento no encontrado' });
@@ -104,7 +116,11 @@ treatmentPlansRouter.get('/:id', async (req, res) => {
     
     res.json(treatment);
   } catch (error) {
-    console.error('Error al obtener plan de tratamiento:', error);
+    console.error('Error detallado:', {
+      message: error.message,
+      stack: error.stack,
+      details: error
+    });
     res.status(500).json({ error: 'Error al obtener el plan de tratamiento' });
   }
 });
