@@ -8,7 +8,7 @@ const Appointment = require('./models/Appointment') // Asegúrate que la ruta se
 // Función para obtener las citas del día siguiente
 const getTomorrowAppointments = async () => {
   // Solo obtener la fecha de mañana (sin hora)
-  const tomorrowDate = dayjs().utc().add(1, 'day').format('YYYY-MM-DD') // Fecha de mañana en formato YYYY-MM-DD
+  const tomorrowDate = dayjs().add(1, 'day').format('YYYY-MM-DD') // Fecha de mañana en formato YYYY-MM-DD
 
   console.log(`Buscando citas para la fecha: ${tomorrowDate}`) // Imprimir la fecha que se está buscando
 
@@ -70,7 +70,8 @@ const sendAppointmentReminders = async () => {
 
 // Configuración del cron job para ejecutar todos los días a las
 const scheduleDailyReminders = () => {
-  cron.schedule('0 20 * * *', async () => {
+  cron.schedule('47 23 * * *', async () => {
+  //cron.schedule('0 20 * * *', async () => {
     console.log('Cron job ejecutado: verificando citas para enviar recordatorios...')
     await sendAppointmentReminders()
   })
