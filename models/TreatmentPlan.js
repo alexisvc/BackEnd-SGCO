@@ -6,7 +6,7 @@ const treatmentPlanSchema = new mongoose.Schema({
     ref: 'Patient',
     required: true
   },
-  especialidad: {  
+  especialidad: {
     type: String,
     required: true
   },
@@ -34,7 +34,6 @@ const treatmentPlanSchema = new mongoose.Schema({
     }
   }]
 })
-
 
 const TreatmentPlan = mongoose.model('TreatmentPlan', treatmentPlanSchema)
 

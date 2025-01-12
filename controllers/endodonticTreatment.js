@@ -3,6 +3,11 @@ const endodonticTreatmentRouter = express.Router()
 const EndodonticTreatment = require('../models/EndodonticTreatment')
 const Patient = require('../models/Patient')
 
+const authMiddleware = require('../middleware/authMiddleware') // Importa el middleware de autenticación
+
+// Aplica el middleware a todas las rutas
+endodonticTreatmentRouter.use(authMiddleware)
+
 const multer = require('multer')
 const path = require('path')
 

@@ -3,6 +3,11 @@ const medicalRecordsRouter = express.Router()
 const MedicalRecord = require('../models/MedicalRecord')
 const Patient = require('../models/Patient')
 
+const authMiddleware = require('../middleware/authMiddleware') // Importa el middleware de autenticación
+
+// Aplica el middleware a todas las rutas
+medicalRecordsRouter.use(authMiddleware)
+
 // Ruta para obtener todas las historias clínicas
 medicalRecordsRouter.get('/', async (req, res) => {
   try {

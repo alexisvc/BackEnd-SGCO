@@ -26,9 +26,9 @@ const consentimientoRouter = require('./controllers/consentimiento')
 const odontologoRouter = require('./controllers/odontologo')
 const appointmentsRouter = require('./controllers/appointments')
 const budgetsRouter = require('./controllers/budgets')
-const paymentsRouter = require('./controllers/payments');
-const financialReportsRouter = require('./controllers/financialReports');
-const contractPlansRouter = require('./controllers/contractPlans');
+const paymentsRouter = require('./controllers/payments')
+const financialReportsRouter = require('./controllers/financialReports')
+const contractPlansRouter = require('./controllers/contractPlans')
 
 app.use(cors())
 app.use(express.json())
@@ -40,7 +40,7 @@ app.get('/', (req, res) => {
 // uploads
 app.use('/uploads', express.static('uploads'))
 
-// Carpeta para los contratos  
+// Carpeta para los contratos
 app.use('/uploads/contracts', express.static('uploads/contracts'))
 
 // Rutas para usuarios
@@ -52,7 +52,7 @@ app.use('/api/medical-records', medicalRecordsRouter)
 // Rutas para login
 app.use('/api/login', loginRouter)
 // Rutas para planes de tratamiento
-app.use('/api/treatment-plans', treatmentPlansRouter);
+app.use('/api/treatment-plans', treatmentPlansRouter)
 // Rutas para cuadros de evolución
 app.use('/api/evolution-charts', evolutionChartsRouter)
 // Rutas para tratamientos de endodoncia
@@ -78,12 +78,11 @@ app.use('/api/appointments', appointmentsRouter)
 // Rutas para Presupuestos
 app.use('/api/budgets', budgetsRouter) // Nueva ruta para presupuestos
 // Rutas para Pagos
-app.use('/api/payments', paymentsRouter);
+app.use('/api/payments', paymentsRouter)
 // Rutas para Reporte Consoldiado
-app.use('/api/financial-reports', financialReportsRouter);
+app.use('/api/financial-reports', financialReportsRouter)
 // Rutas para Contrato Planificacion
-app.use('/api/contracts', contractPlansRouter);
-
+app.use('/api/contracts', contractPlansRouter)
 
 // Middleware para manejar errores 404
 app.use(notFound)

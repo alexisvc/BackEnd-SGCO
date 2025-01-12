@@ -3,6 +3,11 @@ const evolucionOrtodonciaRouter = express.Router()
 const EvolucionOrtodoncia = require('../models/EvolucionOrtodoncia')
 const Ortodoncia = require('../models/Ortodoncia')
 
+const authMiddleware = require('../middleware/authMiddleware') // Importa el middleware de autenticación
+
+// Aplica el middleware a todas las rutas
+evolucionOrtodonciaRouter.use(authMiddleware)
+
 // Obtener todas las evoluciones de ortodoncia
 evolucionOrtodonciaRouter.get('/', async (req, res) => {
   try {

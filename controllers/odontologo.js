@@ -2,6 +2,11 @@ const express = require('express')
 const odontologoRouter = express.Router()
 const Odontologo = require('../models/Odontologo')
 
+const authMiddleware = require('../middleware/authMiddleware') // Importa el middleware de autenticación
+
+// Aplica el middleware a todas las rutas
+odontologoRouter.use(authMiddleware)
+
 // Ruta para obtener todos los odontólogos
 odontologoRouter.get('/', async (req, res) => {
   try {

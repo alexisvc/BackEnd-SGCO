@@ -3,6 +3,11 @@ const disfuncionMandibularRouter = express.Router()
 const DisfuncionMandibular = require('../models/DisfuncionMandibular')
 const Patient = require('../models/Patient')
 
+const authMiddleware = require('../middleware/authMiddleware') // Importa el middleware de autenticación
+
+// Aplica el middleware a todas las rutas
+disfuncionMandibularRouter.use(authMiddleware)
+
 // Ruta para obtener todas las disfunciones mandibulares
 disfuncionMandibularRouter.get('/', async (req, res) => {
   try {

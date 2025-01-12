@@ -1,11 +1,14 @@
-// controllers/cirugiaPatologiaController.js
-
 const express = require('express')
 const cirugiaPatologiaRouter = express.Router()
 const CirugiaPatologia = require('../models/CirugiaPatologia')
 const Patient = require('../models/Patient')
 const multer = require('multer')
 const path = require('path')
+
+const authMiddleware = require('../middleware/authMiddleware') // Importa el middleware de autenticación
+
+// Aplica el middleware a todas las rutas
+cirugiaPatologiaRouter.use(authMiddleware)
 
 // Configuración de multer para subir archivos
 const storage = multer.diskStorage({

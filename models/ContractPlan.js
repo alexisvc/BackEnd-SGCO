@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+const mongoose = require('mongoose')
 
 const contractPlanSchema = new mongoose.Schema({
   treatmentPlan: {
@@ -13,6 +13,6 @@ const contractPlanSchema = new mongoose.Schema({
   }
 }, {
   timestamps: true
-});
+})
 
-module.exports = mongoose.model('ContractPlan', contractPlanSchema);
+module.exports = mongoose.model('ContractPlan', contractPlanSchema)

@@ -3,6 +3,11 @@ const bcrypt = require('bcrypt')
 const usersRouter = express.Router()
 const User = require('../models/User')
 
+const authMiddleware = require('../middleware/authMiddleware') // Importa el middleware de autenticación
+
+// Aplica el middleware a todas las rutas
+usersRouter.use(authMiddleware)
+
 // Ruta para obtener todos los usuarios
 usersRouter.get('/', async (req, res) => {
   try {

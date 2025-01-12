@@ -40,7 +40,7 @@ const patientSchema = new mongoose.Schema({
   },
   apiKey: {
     type: String
-    //required: true
+    // required: true
   },
   telContactoEmergencia: {
     type: String,

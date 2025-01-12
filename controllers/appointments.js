@@ -6,6 +6,11 @@ const dayjs = require('dayjs')
 const isBetween = require('dayjs/plugin/isBetween')
 dayjs.extend(isBetween)
 
+const authMiddleware = require('../middleware/authMiddleware') // Importa el middleware de autenticación
+
+// Aplica el middleware a todas las rutas
+appointmentsRouter.use(authMiddleware)
+
 // Función para verificar si un odontólogo está disponible a una hora específica
 /*
 const isOdontologoAvailable = async (odontologoId, fecha, hora) => {

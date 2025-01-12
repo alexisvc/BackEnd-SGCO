@@ -2,6 +2,11 @@ const express = require('express')
 const patientsRouter = express.Router()
 const Patient = require('../models/Patient')
 
+const authMiddleware = require('../middleware/authMiddleware') // Importa el middleware de autenticación
+
+// Aplica el middleware a todas las rutas
+patientsRouter.use(authMiddleware)
+
 // Ruta para obtener todos los pacientes
 patientsRouter.get('/', async (req, res) => {
   try {

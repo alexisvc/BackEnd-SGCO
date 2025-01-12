@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+const mongoose = require('mongoose')
 
 const financialReportSchema = new mongoose.Schema({
   presupuesto: {
@@ -33,15 +33,15 @@ const financialReportSchema = new mongoose.Schema({
   }
 }, {
   timestamps: true
-});
+})
 
 // Índices
-financialReportSchema.index({ fecha: 1 });
+financialReportSchema.index({ fecha: 1 })
 
 // Método para reporte mensual general
-financialReportSchema.statics.reporteMensual = async function(mes, año) {
-  const inicioMes = new Date(año, mes - 1, 1);
-  const finMes = new Date(año, mes, 0);
+financialReportSchema.statics.reporteMensual = async function (mes, año) {
+  const inicioMes = new Date(año, mes - 1, 1)
+  const finMes = new Date(año, mes, 0)
 
   return this.aggregate([
     {
@@ -56,13 +56,13 @@ financialReportSchema.statics.reporteMensual = async function(mes, año) {
         cantidadTransacciones: { $sum: 1 }
       }
     }
-  ]);
-};
+  ])
+}
 
 // Método para reporte anual
-financialReportSchema.statics.reporteAnual = async function(año) {
-  const inicioAño = new Date(año, 0, 1);
-  const finAño = new Date(año, 11, 31);
+financialReportSchema.statics.reporteAnual = async function (año) {
+  const inicioAño = new Date(año, 0, 1)
+  const finAño = new Date(año, 11, 31)
 
   return this.aggregate([
     {
@@ -72,7 +72,7 @@ financialReportSchema.statics.reporteAnual = async function(año) {
     },
     {
       $group: {
-        _id: { 
+        _id: {
           mes: { $month: '$fecha' },
           metodoPago: '$metodoPago'
         },
@@ -80,14 +80,14 @@ financialReportSchema.statics.reporteAnual = async function(año) {
       }
     },
     {
-      $sort: { 
+      $sort: {
         '_id.mes': 1,
         '_id.metodoPago': 1
       }
     }
-  ]);
-};
+  ])
+}
 
-const FinancialReport = mongoose.model('FinancialReport', financialReportSchema);
+const FinancialReport = mongoose.model('FinancialReport', financialReportSchema)
 
-module.exports = FinancialReport;
+module.exports = FinancialReport
