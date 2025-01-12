@@ -94,7 +94,6 @@ treatmentPlansRouter.get('/patient/:patientId', async (req, res) => {
 })
 
 // Obtener un plan específico por ID
-// Obtener un plan específico por ID
 treatmentPlansRouter.get('/:id', async (req, res) => {
   try {
     const { id } = req.params

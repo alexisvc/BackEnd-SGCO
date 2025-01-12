@@ -2,11 +2,13 @@ require('dotenv').config()
 require('./mongo')
 const express = require('express')
 const cors = require('cors')
+const helmet = require('helmet')
 const app = express()
 
 const notFound = require('./middleware/notFound')
 const handleErrors = require('./middleware/handleErrors')
-const { scheduleDailyReminders } = require('./reminderScheduler') // Importar el cron job
+const { scheduleDailyReminders } = require('./reminderScheduler')
+const limiter = require('./middleware/express-rate-limit')
 
 // Importar controladores
 const usersRouter = require('./controllers/users')
@@ -31,7 +33,14 @@ const financialReportsRouter = require('./controllers/financialReports')
 const contractPlansRouter = require('./controllers/contractPlans')
 
 app.use(cors())
+
+app.use(helmet())
+app.use(helmet.xssFilter())
+app.use(helmet.frameguard({ action: 'deny' }))
+
 app.use(express.json())
+
+app.use(limiter)
 
 app.get('/', (req, res) => {
   res.send('<h1>Bienvenido a mi SGCO</h1>')
@@ -39,10 +48,8 @@ app.get('/', (req, res) => {
 
 // uploads
 app.use('/uploads', express.static('uploads'))
-
 // Carpeta para los contratos
 app.use('/uploads/contracts', express.static('uploads/contracts'))
-
 // Rutas para usuarios
 app.use('/api/users', usersRouter)
 // Rutas para pacientes
