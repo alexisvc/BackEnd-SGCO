@@ -1,70 +1,28 @@
 const budgetsRouter = require('express').Router()
+const { body, validationResult } = require('express-validator');
 const Budget = require('../models/Budget')
 const TreatmentPlan = require('../models/TreatmentPlan')
 
 const authMiddleware = require('../middleware/authMiddleware') // Importa el middleware de autenticación
 
+// Middleware para validar y sanitizar los datos del presupuesto
+const validateBudgetData = [
+  body('paciente').isMongoId().withMessage('El ID del paciente debe ser un ID válido de MongoDB'),
+  body('especialidad').isString().trim().escape().withMessage('La especialidad es obligatoria y debe ser un texto válido'),
+  body('fases').isArray({ min: 1 }).withMessage('Debe incluir al menos una fase'),
+  body('fases.*.nombre').isString().trim().escape().withMessage('El nombre de la fase es obligatorio y debe ser un texto válido'),
+  body('fases.*.descripcion').optional().isString().trim().escape().withMessage('La descripción debe ser un texto válido'),
+  body('fases.*.procedimientos').isArray({ min: 1 }).withMessage('Cada fase debe contener al menos un procedimiento'),
+  body('fases.*.procedimientos.*.nombre').isString().trim().escape().withMessage('El nombre del procedimiento es obligatorio y debe ser un texto válido'),
+  body('fases.*.procedimientos.*.numeroPiezas').isInt({ gt: 0 }).withMessage('El número de piezas debe ser un entero positivo'),
+  body('fases.*.procedimientos.*.costoPorUnidad').isFloat({ min: 0 }).withMessage('El costo por unidad debe ser un número positivo'),
+  body('treatmentPlan').optional().isMongoId().withMessage('El ID del plan de tratamiento debe ser un ID válido de MongoDB')
+];
+
 // Aplica el middleware a todas las rutas
 budgetsRouter.use(authMiddleware)
 
-// Middleware para validar presupuesto
-const validateBudgetData = async (req, res, next) => {
-  console.log('Body recibido:', JSON.stringify(req.body, null, 2))
-  console.log('Tipo de body:', typeof req.body)
 
-  const { paciente, especialidad, fases, treatmentPlan } = req.body
-
-  console.log('Paciente:', paciente)
-  console.log('Especialidad:', especialidad)
-  console.log('Fases:', fases)
-
-  if (!paciente || !especialidad || !fases) {
-    return res.status(400).json({
-      error: 'Todos los campos son obligatorios',
-      missing: {
-        paciente: !paciente,
-        especialidad: !especialidad,
-        fases: !fases
-      }
-    })
-  }
-
-  // Si viene un treatmentPlan, validar que no tenga presupuesto existente
-  if (treatmentPlan) {
-    const existingBudget = await Budget.findOne({ treatmentPlan })
-    if (existingBudget) {
-      return res.status(400).json({
-        error: 'Ya existe un presupuesto para esta planificación'
-      })
-    }
-  }
-
-  if (!Array.isArray(fases) || fases.length === 0) {
-    return res.status(400).json({ error: 'Debe incluir al menos una fase' })
-  }
-
-  for (const fase of fases) {
-    if (!fase.nombre || !fase.descripcion || !Array.isArray(fase.procedimientos)) {
-      return res.status(400).json({ error: 'Información de fase incompleta' })
-    }
-
-    for (const proc of fase.procedimientos) {
-      if (!proc.nombre || !proc.numeroPiezas || !proc.costoPorUnidad) {
-        return res.status(400).json({
-          error: 'Cada procedimiento debe incluir nombre, número de piezas y costo por unidad'
-        })
-      }
-
-      if (proc.numeroPiezas <= 0 || proc.costoPorUnidad < 0) {
-        return res.status(400).json({
-          error: 'El número de piezas debe ser positivo y el costo no puede ser negativo'
-        })
-      }
-    }
-  }
-
-  next()
-}
 
 // Obtener todos los presupuestos
 budgetsRouter.get('/', async (req, res) => {
@@ -131,42 +89,47 @@ budgetsRouter.get('/treatment/:treatmentPlanId', async (req, res) => {
   }
 })
 
-// Crear nuevo presupuesto
+// Ruta para crear un nuevo presupuesto
 budgetsRouter.post('/', validateBudgetData, async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+
   try {
-    const { paciente, especialidad, fases, treatmentPlan } = req.body
-    // console.log('Creating budget with treatment plan:', treatmentPlan);
-    console.log('Received treatmentPlan:', treatmentPlan) // Debug
+    const { paciente, especialidad, fases, treatmentPlan } = req.body;
 
-    const newBudget = new Budget({
-      paciente,
-      especialidad,
-      fases,
-      treatmentPlan
-    })
+    // Verificar si ya existe un presupuesto para el plan de tratamiento
+    if (treatmentPlan) {
+      const existingBudget = await Budget.findOne({ treatmentPlan });
+      if (existingBudget) {
+        return res.status(400).json({ error: 'Ya existe un presupuesto para esta planificación' });
+      }
+    }
 
-    const savedBudget = await newBudget.save()
+    const newBudget = new Budget({ paciente, especialidad, fases, treatmentPlan });
+    const savedBudget = await newBudget.save();
 
     // Si viene de una planificación, actualizar la planificación
     if (treatmentPlan) {
-      const treatment = await TreatmentPlan.findById(treatmentPlan)
+      const treatment = await TreatmentPlan.findById(treatmentPlan);
       if (!treatment) {
-        return res.status(404).json({ error: 'Planificación no encontrada' })
+        return res.status(404).json({ error: 'Planificación no encontrada' });
       }
-      treatment.budget = savedBudget._id
-      await treatment.save()
+      treatment.budget = savedBudget._id;
+      await treatment.save();
     }
 
     const populatedBudget = await Budget.findById(savedBudget._id)
       .populate('paciente', 'nombrePaciente numeroCedula')
-      .populate('treatmentPlan')
+      .populate('treatmentPlan');
 
-    res.status(201).json(populatedBudget)
+    res.status(201).json(populatedBudget);
   } catch (error) {
-    console.error('Error creating budget:', error)
-    res.status(500).json({ error: 'Error al crear el presupuesto' })
+    console.error('Error al crear el presupuesto:', error);
+    res.status(500).json({ error: 'Error al crear el presupuesto' });
   }
-})
+});
 
 // Agregar un nuevo procedimiento a una fase
 budgetsRouter.post('/:id/fase/:faseIndex/procedimiento', async (req, res) => {
@@ -289,29 +252,34 @@ budgetsRouter.patch('/:id/fase/:faseIndex/procedimientos', async (req, res) => {
   }
 })
 
-// Actualizar un presupuesto
+// Ruta para actualizar un presupuesto existente
 budgetsRouter.put('/:id', validateBudgetData, async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+
   try {
-    const { id } = req.params
-    const budgetData = req.body
+    const { id } = req.params;
+    const budgetData = req.body;
 
     const updatedBudget = await Budget.findByIdAndUpdate(
       id,
       budgetData,
       { new: true, runValidators: true }
     ).populate('paciente', 'nombrePaciente numeroCedula')
-      .populate('treatmentPlan')
+     .populate('treatmentPlan');
 
     if (!updatedBudget) {
-      return res.status(404).json({ error: 'Presupuesto no encontrado' })
+      return res.status(404).json({ error: 'Presupuesto no encontrado' });
     }
 
-    res.json(updatedBudget)
+    res.json(updatedBudget);
   } catch (error) {
-    console.error('Error al actualizar presupuesto:', error)
-    res.status(500).json({ error: 'Error al actualizar el presupuesto' })
+    console.error('Error al actualizar el presupuesto:', error);
+    res.status(500).json({ error: 'Error al actualizar el presupuesto' });
   }
-})
+});
 
 /// Eliminar un presupuesto
 

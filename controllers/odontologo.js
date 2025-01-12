@@ -1,4 +1,5 @@
 const express = require('express')
+const { body, validationResult } = require('express-validator');
 const odontologoRouter = express.Router()
 const Odontologo = require('../models/Odontologo')
 
@@ -6,6 +7,17 @@ const authMiddleware = require('../middleware/authMiddleware') // Importa el mid
 
 // Aplica el middleware a todas las rutas
 odontologoRouter.use(authMiddleware)
+
+// Middleware para validar y sanitizar los datos de odontólogos
+const validateOdontologoData = [
+  body('nombreOdontologo').isString().trim().escape().notEmpty().withMessage('El nombre es obligatorio y debe ser un texto válido'),
+  body('edadOdontologo').isInt({ min: 18 }).withMessage('La edad debe ser un número entero mayor o igual a 18'),
+  body('correoOdontologo').isEmail().normalizeEmail().withMessage('El correo debe ser un correo electrónico válido'),
+  body('direccionOdontologo').isString().trim().escape().notEmpty().withMessage('La dirección es obligatoria y debe ser un texto válido'),
+  body('generoOdontologo').isIn(['masculino', 'femenino']).withMessage('El género debe ser masculino o femenino'),
+  body('especialidad').isString().trim().escape().notEmpty().withMessage('La especialidad es obligatoria y debe ser un texto válido'),
+  body('telefono').matches(/^\d{10}$/).withMessage('El teléfono debe ser un número de 10 dígitos')
+];
 
 // Ruta para obtener todos los odontólogos
 odontologoRouter.get('/', async (req, res) => {
@@ -62,7 +74,12 @@ odontologoRouter.get('/especialidad/:especialidad', async (req, res) => {
 })
 
 // Ruta para registrar un nuevo odontólogo
-odontologoRouter.post('/', async (req, res) => {
+odontologoRouter.post('/', validateOdontologoData, async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+
   try {
     const {
       nombreOdontologo,
@@ -72,14 +89,8 @@ odontologoRouter.post('/', async (req, res) => {
       generoOdontologo,
       especialidad,
       telefono
-    } = req.body
+    } = req.body;
 
-    // Validar que todos los campos requeridos están presentes
-    if (!nombreOdontologo || !edadOdontologo || !correoOdontologo || !direccionOdontologo || !generoOdontologo || !especialidad || !telefono) {
-      return res.status(400).json({ error: 'All fields are required' })
-    }
-
-    // Crear el nuevo odontólogo
     const odontologo = new Odontologo({
       nombreOdontologo,
       edadOdontologo,
@@ -88,20 +99,25 @@ odontologoRouter.post('/', async (req, res) => {
       generoOdontologo,
       especialidad,
       telefono
-    })
+    });
 
-    // Guardar el odontólogo en la base de datos
-    const savedOdontologo = await odontologo.save()
-    res.json(savedOdontologo)
+    const savedOdontologo = await odontologo.save();
+    res.status(201).json(savedOdontologo);
   } catch (error) {
-    res.status(500).json({ error: 'Internal Server Error' })
+    console.error('Error al registrar odontólogo:', error);
+    res.status(500).json({ error: 'Error interno del servidor' });
   }
-})
+});
 
 // Ruta para actualizar un odontólogo por su ID
-odontologoRouter.put('/:id', async (req, res) => {
+odontologoRouter.put('/:id', validateOdontologoData, async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+
   try {
-    const odontologoId = req.params.id
+    const odontologoId = req.params.id;
     const {
       nombreOdontologo,
       edadOdontologo,
@@ -110,27 +126,28 @@ odontologoRouter.put('/:id', async (req, res) => {
       generoOdontologo,
       especialidad,
       telefono
-    } = req.body
+    } = req.body;
 
-    const existingOdontologo = await Odontologo.findById(odontologoId)
+    const existingOdontologo = await Odontologo.findById(odontologoId);
     if (!existingOdontologo) {
-      return res.status(404).json({ error: 'Odontólogo not found' })
+      return res.status(404).json({ error: 'Odontólogo no encontrado' });
     }
 
-    if (nombreOdontologo) existingOdontologo.nombreOdontologo = nombreOdontologo
-    if (edadOdontologo) existingOdontologo.edadOdontologo = edadOdontologo
-    if (correoOdontologo) existingOdontologo.correoOdontologo = correoOdontologo
-    if (direccionOdontologo) existingOdontologo.direccionOdontologo = direccionOdontologo
-    if (generoOdontologo) existingOdontologo.generoOdontologo = generoOdontologo
-    if (especialidad) existingOdontologo.especialidad = especialidad
-    if (telefono) existingOdontologo.telefono = telefono
+    existingOdontologo.nombreOdontologo = nombreOdontologo;
+    existingOdontologo.edadOdontologo = edadOdontologo;
+    existingOdontologo.correoOdontologo = correoOdontologo;
+    existingOdontologo.direccionOdontologo = direccionOdontologo;
+    existingOdontologo.generoOdontologo = generoOdontologo;
+    existingOdontologo.especialidad = especialidad;
+    existingOdontologo.telefono = telefono;
 
-    const updatedOdontologo = await existingOdontologo.save()
-    res.json(updatedOdontologo)
+    const updatedOdontologo = await existingOdontologo.save();
+    res.json(updatedOdontologo);
   } catch (error) {
-    res.status(500).json({ error: 'Internal Server Error' })
+    console.error('Error al actualizar odontólogo:', error);
+    res.status(500).json({ error: 'Error interno del servidor' });
   }
-})
+});
 
 // Ruta para eliminar un odontólogo por su ID
 odontologoRouter.delete('/:id', async (req, res) => {

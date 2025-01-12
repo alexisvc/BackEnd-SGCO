@@ -1,4 +1,5 @@
 const financialReportsRouter = require('express').Router()
+const { body, validationResult } = require('express-validator');
 const FinancialReport = require('../models/FinancialReport')
 const Budget = require('../models/Budget')
 
@@ -6,6 +7,14 @@ const authMiddleware = require('../middleware/authMiddleware') // Importa el mid
 
 // Aplica el middleware a todas las rutas
 financialReportsRouter.use(authMiddleware)
+
+// Middleware para validar y sanitizar los datos de reportes financieros
+const validateFinancialReportData = [
+  body('presupuesto').isMongoId().withMessage('El ID del presupuesto debe ser un ID válido de MongoDB'),
+  body('monto').isFloat({ min: 0 }).withMessage('El monto debe ser un número positivo'),
+  body('metodoPago').isString().trim().escape().withMessage('El método de pago es obligatorio y debe ser un texto válido'),
+  body('conceptoPago').optional().isString().trim().escape().withMessage('El concepto de pago debe ser un texto válido')
+];
 
 // Obtener todos los reportes financieros
 financialReportsRouter.get('/', async (req, res) => {
@@ -19,38 +28,6 @@ financialReportsRouter.get('/', async (req, res) => {
     res.status(500).json({ error: 'Error interno del servidor' })
   }
 })
-
-/*
-
-// Obtener reporte mensual
-financialReportsRouter.get('/mensual', async (req, res) => {
-  try {
-    const { mes, año } = req.query;
-
-    if (!mes || !año) {
-      return res.status(400).json({ error: 'Mes y año son requeridos' });
-    }
-
-    const reporte = await FinancialReport.reporteMensual(
-      parseInt(mes),
-      parseInt(año)
-    );
-
-    const totalMensual = reporte.reduce((sum, item) => sum + item.totalMonto, 0);
-
-    res.json({
-      reporte,
-      totalMensual,
-      mes,
-      año
-    });
-  } catch (error) {
-    console.error('Error al generar reporte mensual:', error);
-    res.status(500).json({ error: 'Error al generar reporte mensual' });
-  }
-});
-
-*/
 
 // Obtener reporte mensual
 financialReportsRouter.get('/mensual', async (req, res) => {
@@ -168,14 +145,19 @@ financialReportsRouter.get('/rango', async (req, res) => {
   }
 })
 
-// Registrar nuevo ingreso
-financialReportsRouter.post('/', async (req, res) => {
-  try {
-    const { presupuesto, monto, metodoPago, conceptoPago } = req.body
+// Ruta para registrar un nuevo ingreso
+financialReportsRouter.post('/', validateFinancialReportData, async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
 
-    const budgetExists = await Budget.findById(presupuesto)
+  try {
+    const { presupuesto, monto, metodoPago, conceptoPago } = req.body;
+
+    const budgetExists = await Budget.findById(presupuesto);
     if (!budgetExists) {
-      return res.status(404).json({ error: 'Presupuesto no encontrado' })
+      return res.status(404).json({ error: 'Presupuesto no encontrado' });
     }
 
     const newReport = new FinancialReport({
@@ -185,20 +167,20 @@ financialReportsRouter.post('/', async (req, res) => {
       metodoPago,
       conceptoPago,
       fecha: new Date()
-    })
+    });
 
-    const savedReport = await newReport.save()
+    const savedReport = await newReport.save();
 
     const populatedReport = await FinancialReport.findById(savedReport._id)
       .populate('paciente', 'nombrePaciente numeroCedula')
-      .populate('presupuesto', 'fecha especialidad totalGeneral')
+      .populate('presupuesto', 'fecha especialidad totalGeneral');
 
-    res.status(201).json(populatedReport)
+    res.status(201).json(populatedReport);
   } catch (error) {
-    console.error('Error al crear reporte financiero:', error)
-    res.status(500).json({ error: 'Error al crear reporte financiero' })
+    console.error('Error al crear reporte financiero:', error);
+    res.status(500).json({ error: 'Error al crear reporte financiero' });
   }
-})
+});
 
 // Eliminar un reporte financiero
 financialReportsRouter.delete('/:id', async (req, res) => {

@@ -1,4 +1,5 @@
 const express = require('express')
+const { body, validationResult } = require('express-validator');
 const evolucionOrtodonciaRouter = express.Router()
 const EvolucionOrtodoncia = require('../models/EvolucionOrtodoncia')
 const Ortodoncia = require('../models/Ortodoncia')
@@ -7,6 +8,13 @@ const authMiddleware = require('../middleware/authMiddleware') // Importa el mid
 
 // Aplica el middleware a todas las rutas
 evolucionOrtodonciaRouter.use(authMiddleware)
+
+// Middleware para validar y sanitizar los datos de la evolución de ortodoncia
+const validateEvolucionOrtodonciaData = [
+  body('ortodoncia').isMongoId().withMessage('El ID de ortodoncia debe ser un ID válido de MongoDB'),
+  body('observaciones').optional().isString().trim().escape().withMessage('Las observaciones deben ser un texto válido'),
+  body('fecha').optional().isISO8601().toDate().withMessage('La fecha debe ser una fecha válida en formato ISO8601')
+];
 
 // Obtener todas las evoluciones de ortodoncia
 evolucionOrtodonciaRouter.get('/', async (req, res) => {
@@ -50,50 +58,62 @@ evolucionOrtodonciaRouter.get('/ortodoncia/:ortodonciaId', async (req, res) => {
   }
 })
 
-// Registrar una nueva evolución de ortodoncia
-evolucionOrtodonciaRouter.post('/', async (req, res) => {
-  try {
-    const { ortodoncia, ...evolucionData } = req.body
+// Ruta para registrar una nueva evolución de ortodoncia
+evolucionOrtodonciaRouter.post('/', validateEvolucionOrtodonciaData, async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
 
-    const existingOrtodoncia = await Ortodoncia.findById(ortodoncia)
+  try {
+    const { ortodoncia, ...evolucionData } = req.body;
+
+    const existingOrtodoncia = await Ortodoncia.findById(ortodoncia);
     if (!existingOrtodoncia) {
-      return res.status(404).json({ error: 'Ortodoncia not found' })
+      return res.status(404).json({ error: 'Ortodoncia not found' });
     }
 
     const evolucionOrtodoncia = new EvolucionOrtodoncia({
       ortodoncia,
       ...evolucionData
-    })
+    });
 
-    const savedEvolucion = await evolucionOrtodoncia.save()
-    existingOrtodoncia.evoluciones = existingOrtodoncia.evoluciones.concat(savedEvolucion._id)
-    await existingOrtodoncia.save()
+    const savedEvolucion = await evolucionOrtodoncia.save();
+    existingOrtodoncia.evoluciones = existingOrtodoncia.evoluciones.concat(savedEvolucion._id);
+    await existingOrtodoncia.save();
 
-    res.status(201).json(savedEvolucion)
+    res.status(201).json(savedEvolucion);
   } catch (error) {
-    res.status(500).json({ error: 'Internal Server Error' })
+    console.error(error);
+    res.status(500).json({ error: 'Internal Server Error' });
   }
-})
+});
 
-// Actualizar una evolución de ortodoncia por su ID
-evolucionOrtodonciaRouter.put('/:id', async (req, res) => {
+// Ruta para actualizar una evolución de ortodoncia por su ID
+evolucionOrtodonciaRouter.put('/:id', validateEvolucionOrtodonciaData, async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+
   try {
-    const evolucionId = req.params.id
-    const { ortodoncia, ...evolucionData } = req.body
+    const evolucionId = req.params.id;
+    const { ortodoncia, ...evolucionData } = req.body;
 
-    const existingEvolucion = await EvolucionOrtodoncia.findById(evolucionId)
+    const existingEvolucion = await EvolucionOrtodoncia.findById(evolucionId);
     if (!existingEvolucion) {
-      return res.status(404).json({ error: 'EvolucionOrtodoncia not found' })
+      return res.status(404).json({ error: 'EvolucionOrtodoncia not found' });
     }
 
-    Object.assign(existingEvolucion, evolucionData)
+    Object.assign(existingEvolucion, evolucionData);
 
-    const updatedEvolucion = await existingEvolucion.save()
-    res.json(updatedEvolucion)
+    const updatedEvolucion = await existingEvolucion.save();
+    res.json(updatedEvolucion);
   } catch (error) {
-    res.status(500).json({ error: 'Internal Server Error' })
+    console.error(error);
+    res.status(500).json({ error: 'Internal Server Error' });
   }
-})
+});
 
 // Eliminar una evolución de ortodoncia por su ID
 evolucionOrtodonciaRouter.delete('/:id', async (req, res) => {

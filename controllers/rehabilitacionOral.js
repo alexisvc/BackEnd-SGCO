@@ -1,4 +1,5 @@
 const express = require('express')
+const { body, params, validationResult } = require('express-validator');
 const rehabilitacionOralRouter = express.Router()
 const RehabilitacionOral = require('../models/RehabilitacionOral')
 const Patient = require('../models/Patient')
@@ -21,6 +22,13 @@ const storage = multer.diskStorage({
 })
 
 const upload = multer({ storage })
+
+// Middleware para validar y sanitizar los datos de rehabilitación oral
+const validateRehabilitacionOralData = [
+  body('paciente').isMongoId().withMessage('El ID del paciente debe ser un ID válido de MongoDB'),
+  body('diagnostico').isString().trim().escape().notEmpty().withMessage('El diagnóstico es obligatorio y debe ser un texto válido'),
+  body('comentarios').optional().isString().trim().escape().withMessage('Los comentarios deben ser un texto válido')
+];
 
 // Ruta para obtener todas las rehabilitaciones orales
 rehabilitacionOralRouter.get('/', async (req, res) => {
@@ -91,95 +99,111 @@ rehabilitacionOralRouter.get('/patient/:patientId', async (req, res) => {
 })
 
 // Ruta para crear una nueva rehabilitación oral
-rehabilitacionOralRouter.post('/', upload.fields([{ name: 'archivo1', maxCount: 1 }, { name: 'archivo2', maxCount: 1 }, { name: 'archivo3', maxCount: 1 }]), async (req, res) => {
-  try {
-    const { paciente, ...rehabilitacionOralData } = req.body
-    const archivo1 = req.files && req.files.archivo1 ? req.files.archivo1[0].filename : null
-    const archivo2 = req.files && req.files.archivo2 ? req.files.archivo2[0].filename : null
-    const archivo3 = req.files && req.files.archivo3 ? req.files.archivo3[0].filename : null
+rehabilitacionOralRouter.post('/', upload.fields([
+  { name: 'archivo1', maxCount: 1 },
+  { name: 'archivo2', maxCount: 1 },
+  { name: 'archivo3', maxCount: 1 }
+]), validateRehabilitacionOralData, async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
 
-    // Validate that the patient exists
-    const existingPatient = await Patient.findById(paciente)
+  try {
+    const { paciente, diagnostico, comentarios } = req.body;
+    const archivo1 = req.files && req.files.archivo1 ? req.files.archivo1[0].filename : null;
+    const archivo2 = req.files && req.files.archivo2 ? req.files.archivo2[0].filename : null;
+    const archivo3 = req.files && req.files.archivo3 ? req.files.archivo3[0].filename : null;
+
+    const existingPatient = await Patient.findById(paciente);
     if (!existingPatient) {
-      return res.status(400).json({ error: 'Patient not found' })
+      return res.status(404).json({ error: 'Paciente no encontrado' });
     }
 
-    // Check if the patient already has a rehabilitacion oral record
-    const existingRehabilitacionOral = await RehabilitacionOral.findOne({ paciente })
+    const existingRehabilitacionOral = await RehabilitacionOral.findOne({ paciente });
     if (existingRehabilitacionOral) {
-      return res.status(400).json({ error: 'Patient already has a RehabilitacionOral record' })
+      return res.status(400).json({ error: 'El paciente ya tiene un registro de rehabilitación oral' });
     }
 
     const rehabilitacionOral = new RehabilitacionOral({
       paciente,
-      ...rehabilitacionOralData,
+      diagnostico,
+      comentarios,
       archivo1,
       archivo2,
       archivo3
-    })
+    });
 
-    const savedRehabilitacionOral = await rehabilitacionOral.save()
-    existingPatient.rehabilitacionOral = savedRehabilitacionOral._id
-    await existingPatient.save()
+    const savedRehabilitacionOral = await rehabilitacionOral.save();
+    existingPatient.rehabilitacionOral = savedRehabilitacionOral._id;
+    await existingPatient.save();
 
-    // Añadir la URL completa del archivo si existe
     const savedRehabilitacionOralWithFileUrl = {
       ...savedRehabilitacionOral._doc,
       archivo1Url: archivo1 ? `${req.protocol}://${req.get('host')}/uploads/${savedRehabilitacionOral.archivo1}` : null,
       archivo2Url: archivo2 ? `${req.protocol}://${req.get('host')}/uploads/${savedRehabilitacionOral.archivo2}` : null,
       archivo3Url: archivo3 ? `${req.protocol}://${req.get('host')}/uploads/${savedRehabilitacionOral.archivo3}` : null
-    }
+    };
 
-    res.status(201).json(savedRehabilitacionOralWithFileUrl)
+    res.status(201).json(savedRehabilitacionOralWithFileUrl);
   } catch (error) {
-    console.error(error)
-    res.status(500).json({ error: 'Internal Server Error' })
+    console.error('Error al registrar rehabilitación oral:', error);
+    res.status(500).json({ error: 'Error interno del servidor' });
   }
-})
+});
 
 // Ruta para actualizar una rehabilitación oral por su ID
-rehabilitacionOralRouter.put('/:id', upload.fields([{ name: 'archivo1', maxCount: 1 }, { name: 'archivo2', maxCount: 1 }, { name: 'archivo3', maxCount: 1 }]), async (req, res) => {
-  try {
-    const rehabilitacionOralId = req.params.id
-    const { paciente, ...rehabilitacionOralData } = req.body
-    const archivo1 = req.files && req.files.archivo1 ? req.files.archivo1[0].filename : null
-    const archivo2 = req.files && req.files.archivo2 ? req.files.archivo2[0].filename : null
-    const archivo3 = req.files && req.files.archivo3 ? req.files.archivo3[0].filename : null
+rehabilitacionOralRouter.put('/:id', upload.fields([
+  { name: 'archivo1', maxCount: 1 },
+  { name: 'archivo2', maxCount: 1 },
+  { name: 'archivo3', maxCount: 1 }
+]), validateRehabilitacionOralData, async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
 
-    const existingRejabilitacionOral = await RehabilitacionOral.findById(rehabilitacionOralId)
-    if (!existingRejabilitacionOral) {
-      return res.status(404).json({ error: 'Rehabilitacion Oral not found' })
+  try {
+    const rehabilitacionOralId = req.params.id;
+    const { paciente, diagnostico, comentarios } = req.body;
+    const archivo1 = req.files && req.files.archivo1 ? req.files.archivo1[0].filename : null;
+    const archivo2 = req.files && req.files.archivo2 ? req.files.archivo2[0].filename : null;
+    const archivo3 = req.files && req.files.archivo3 ? req.files.archivo3[0].filename : null;
+
+    const existingRehabilitacionOral = await RehabilitacionOral.findById(rehabilitacionOralId);
+    if (!existingRehabilitacionOral) {
+      return res.status(404).json({ error: 'Rehabilitación oral no encontrada' });
     }
 
     if (paciente) {
-      const existingPatient = await Patient.findById(paciente)
+      const existingPatient = await Patient.findById(paciente);
       if (!existingPatient) {
-        return res.status(404).json({ error: 'Patient not found' })
+        return res.status(404).json({ error: 'Paciente no encontrado' });
       }
-      existingRejabilitacionOral.paciente = paciente
+      existingRehabilitacionOral.paciente = paciente;
     }
 
-    if (archivo1) existingRejabilitacionOral.archivo1 = archivo1
-    if (archivo2) existingRejabilitacionOral.archivo2 = archivo2
-    if (archivo3) existingRejabilitacionOral.archivo3 = archivo3
-    Object.assign(existingRejabilitacionOral, rehabilitacionOralData)
+    if (archivo1) existingRehabilitacionOral.archivo1 = archivo1;
+    if (archivo2) existingRehabilitacionOral.archivo2 = archivo2;
+    if (archivo3) existingRehabilitacionOral.archivo3 = archivo3;
+    existingRehabilitacionOral.diagnostico = diagnostico;
+    existingRehabilitacionOral.comentarios = comentarios;
 
-    const updatedRehabilitacionOral = await existingRejabilitacionOral.save()
+    const updatedRehabilitacionOral = await existingRehabilitacionOral.save();
 
-    // Añadir la URL completa del archivo si existe
     const updatedRehabilitacionOralWithFileUrl = {
       ...updatedRehabilitacionOral._doc,
       archivo1Url: archivo1 ? `${req.protocol}://${req.get('host')}/uploads/${updatedRehabilitacionOral.archivo1}` : null,
       archivo2Url: archivo2 ? `${req.protocol}://${req.get('host')}/uploads/${updatedRehabilitacionOral.archivo2}` : null,
       archivo3Url: archivo3 ? `${req.protocol}://${req.get('host')}/uploads/${updatedRehabilitacionOral.archivo3}` : null
-    }
+    };
 
-    res.json(updatedRehabilitacionOralWithFileUrl)
+    res.json(updatedRehabilitacionOralWithFileUrl);
   } catch (error) {
-    console.error(error)
-    res.status(500).json({ error: 'Internal Server Error' })
+    console.error('Error al actualizar rehabilitación oral:', error);
+    res.status(500).json({ error: 'Error interno del servidor' });
   }
-})
+});
 
 // Ruta para eliminar una rehabilitación oral por su ID
 rehabilitacionOralRouter.delete('/:id', async (req, res) => {

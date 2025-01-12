@@ -1,12 +1,29 @@
 const paymentsRouter = require('express').Router()
+const { body, param, validationResult } = require('express-validator');
 const Payment = require('../models/Payment')
 const Budget = require('../models/Budget')
 const FinancialReport = require('../models/FinancialReport')
-
+const TreatmentPlan = require('../models/TreatmentPlan')
 const authMiddleware = require('../middleware/authMiddleware') // Importa el middleware de autenticación
 
 // Aplica el middleware a todas las rutas
 paymentsRouter.use(authMiddleware)
+
+// Middleware para validar y sanitizar los datos de pagos
+const validatePaymentData = [
+  param('budgetId').isMongoId().withMessage('El ID del presupuesto debe ser un ID válido de MongoDB'),
+  param('faseIndex').isInt({ min: 0 }).withMessage('El índice de la fase debe ser un número entero no negativo'),
+  body('descripcion').isString().trim().escape().notEmpty().withMessage('La descripción es obligatoria y debe ser un texto válido'),
+  body('monto').isFloat({ min: 0 }).withMessage('El monto debe ser un número positivo'),
+  body('metodoPago').isString().trim().escape().notEmpty().withMessage('El método de pago es obligatorio y debe ser un texto válido')
+];
+
+const validateAnularPaymentData = [
+  param('budgetId').isMongoId().withMessage('El ID del presupuesto debe ser un ID válido de MongoDB'),
+  param('faseIndex').isInt({ min: 0 }).withMessage('El índice de la fase debe ser un número entero no negativo'),
+  param('pagoId').isMongoId().withMessage('El ID del pago debe ser un ID válido de MongoDB'),
+  body('motivo').isString().trim().escape().notEmpty().withMessage('El motivo de anulación es obligatorio y debe ser un texto válido')
+];
 
 // Obtener todos los pagos de un presupuesto con resumen
 paymentsRouter.get('/budget/:budgetId/summary', async (req, res) => {
@@ -117,50 +134,34 @@ paymentsRouter.post('/budget/:budgetId/fase/:faseIndex/treatment/:treatmentId/pa
   }
 })
 
-// Registrar nuevo pago
-paymentsRouter.post('/budget/:budgetId/fase/:faseIndex/pago', async (req, res) => {
+// Ruta para registrar un nuevo pago
+paymentsRouter.post('/budget/:budgetId/fase/:faseIndex/pago', validatePaymentData, async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+
   try {
-    const { descripcion, monto, metodoPago } = req.body
-    const { budgetId, faseIndex } = req.params
+    const { descripcion, monto, metodoPago } = req.body;
+    const { budgetId, faseIndex } = req.params;
 
-    const budget = await Budget.findById(budgetId)
+    const budget = await Budget.findById(budgetId);
     if (!budget) {
-      return res.status(404).json({ error: 'Presupuesto no encontrado' })
+      return res.status(404).json({ error: 'Presupuesto no encontrado' });
     }
-
-    // Buscar o crear el registro de pagos para la fase
 
     let paymentPhase = await Payment.findOne({
       budget: budgetId,
       faseIndex: parseInt(faseIndex)
-    })
+    });
 
     if (!paymentPhase) {
-      paymentPhase = await Payment.initializeForBudgetPhase(budget, parseInt(faseIndex))
+      paymentPhase = await Payment.initializeForBudgetPhase(budget, parseInt(faseIndex));
     }
-
-    /*
-    let paymentPhase = await Payment.findOne({
-        budget: budgetId,
-        faseIndex: parseInt(faseIndex)
-      });
-
-      if (!paymentPhase) {
-        paymentPhase = new Payment({
-          budget: budgetId,
-          faseIndex: parseInt(faseIndex),
-          nombreFase: budget.fases[parseInt(faseIndex)].nombre,
-          totalFase: budget.fases[parseInt(faseIndex)].total
-        });
-        await paymentPhase.save();
-      }
-*/
 
     // Validar que el monto no exceda el saldo pendiente
     if (monto > paymentPhase.saldoPendiente) {
-      return res.status(400).json({
-        error: 'El monto del pago excede el saldo pendiente'
-      })
+      return res.status(400).json({ error: 'El monto del pago excede el saldo pendiente' });
     }
 
     // Registrar el pago
@@ -170,9 +171,9 @@ paymentsRouter.post('/budget/:budgetId/fase/:faseIndex/pago', async (req, res) =
       metodoPago,
       fecha: new Date(),
       saldo: paymentPhase.saldoPendiente - monto
-    })
+    });
 
-    const updatedPaymentPhase = await paymentPhase.save()
+    const updatedPaymentPhase = await paymentPhase.save();
 
     // Crear registro financiero
     const financialReport = new FinancialReport({
@@ -181,48 +182,53 @@ paymentsRouter.post('/budget/:budgetId/fase/:faseIndex/pago', async (req, res) =
       monto,
       metodoPago,
       conceptoPago: `Pago de fase ${parseInt(faseIndex) + 1}: ${descripcion}`
-    })
+    });
 
-    await financialReport.save()
+    await financialReport.save();
 
     // Actualizar el estado del presupuesto
-    const allPayments = await Payment.find({ budget: budgetId })
+    const allPayments = await Payment.find({ budget: budgetId });
     const totalPagado = allPayments.reduce((sum, phase) =>
       sum + phase.pagos.filter(p => !p.anulado)
-        .reduce((pSum, pago) => pSum + pago.monto, 0), 0)
+        .reduce((pSum, pago) => pSum + pago.monto, 0), 0);
 
-    budget.totalPagado = totalPagado
-    budget.saldoPendienteTotal = budget.totalGeneral - totalPagado
+    budget.totalPagado = totalPagado;
+    budget.saldoPendienteTotal = budget.totalGeneral - totalPagado;
     budget.estadoPagoGeneral = totalPagado === 0
       ? 'pendiente'
-      : totalPagado >= budget.totalGeneral ? 'completado' : 'parcial'
-    await budget.save()
+      : totalPagado >= budget.totalGeneral ? 'completado' : 'parcial';
+    await budget.save();
 
-    res.json(updatedPaymentPhase)
+    res.json(updatedPaymentPhase);
   } catch (error) {
-    console.error('Error al registrar pago:', error)
-    res.status(500).json({ error: 'Error al registrar el pago' })
+    console.error('Error al registrar pago:', error);
+    res.status(500).json({ error: 'Error al registrar el pago' });
   }
-})
+});
 
-// Anular pago
-paymentsRouter.patch('/budget/:budgetId/fase/:faseIndex/pago/:pagoId/anular', async (req, res) => {
+// Ruta para anular un pago
+paymentsRouter.patch('/budget/:budgetId/fase/:faseIndex/pago/:pagoId/anular', validateAnularPaymentData, async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+
   try {
-    const { budgetId, faseIndex, pagoId } = req.params
-    const { motivo } = req.body
+    const { budgetId, faseIndex, pagoId } = req.params;
+    const { motivo } = req.body;
 
     const paymentPhase = await Payment.findOne({
       budget: budgetId,
       faseIndex: parseInt(faseIndex)
-    })
+    });
 
     if (!paymentPhase) {
-      return res.status(404).json({ error: 'Fase de pago no encontrada' })
+      return res.status(404).json({ error: 'Fase de pago no encontrada' });
     }
 
-    const pago = paymentPhase.pagos.id(pagoId)
+    const pago = paymentPhase.pagos.id(pagoId);
     if (!pago) {
-      return res.status(404).json({ error: 'Pago no encontrado' })
+      return res.status(404).json({ error: 'Pago no encontrado' });
     }
 
     // Anular el registro financiero
@@ -231,25 +237,25 @@ paymentsRouter.patch('/budget/:budgetId/fase/:faseIndex/pago/:pagoId/anular', as
       monto: pago.monto,
       metodoPago: pago.metodoPago,
       fecha: pago.fecha
-    })
+    });
 
     // Anular el pago
-    pago.anulado = true
-    pago.fechaAnulacion = new Date()
-    pago.motivoAnulacion = motivo
+    pago.anulado = true;
+    pago.fechaAnulacion = new Date();
+    pago.motivoAnulacion = motivo;
 
-    const updatedPaymentPhase = await paymentPhase.save()
+    const updatedPaymentPhase = await paymentPhase.save();
 
     // Actualizar el presupuesto restando el pago anulado
-    const budget = await Budget.findById(budgetId)
-    await budget.actualizarPagosFase(parseInt(faseIndex), -pago.monto)
+    const budget = await Budget.findById(budgetId);
+    await budget.actualizarPagosFase(parseInt(faseIndex), -pago.monto);
 
-    res.json(updatedPaymentPhase)
+    res.json(updatedPaymentPhase);
   } catch (error) {
-    console.error('Error al anular pago:', error)
-    res.status(500).json({ error: 'Error al anular el pago' })
+    console.error('Error al anular pago:', error);
+    res.status(500).json({ error: 'Error al anular el pago' });
   }
-})
+});
 
 // Eliminar todos los pagos de un presupuesto
 paymentsRouter.delete('/budget/:budgetId/pagos', async (req, res) => {
