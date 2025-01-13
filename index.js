@@ -32,7 +32,14 @@ const paymentsRouter = require('./controllers/payments')
 const financialReportsRouter = require('./controllers/financialReports')
 const contractPlansRouter = require('./controllers/contractPlans')
 
-app.use(cors())
+// app.use(cors())
+
+const corsOptions = {
+  origin: 'http://localhost:5173', // Reemplaza con el origen de tu aplicación
+  optionsSuccessStatus: 200
+}
+
+app.use(cors(corsOptions))
 
 app.use(helmet())
 app.use(helmet.xssFilter())
@@ -47,9 +54,21 @@ app.get('/', (req, res) => {
 })
 
 // uploads
-app.use('/uploads', express.static('uploads'))
+// app.use('/uploads', cors(corsOptions), express.static('uploads'))
+
+app.use('/uploads', cors(corsOptions), (req, res, next) => {
+  res.setHeader('Access-Control-Allow-Origin', '*')
+  res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin')
+  next()
+}, express.static('uploads'))
+
 // Carpeta para los contratos
-app.use('/uploads/contracts', express.static('uploads/contracts'))
+app.use('/uploads/contracts', cors(corsOptions), (req, res, next) => {
+  res.setHeader('Access-Control-Allow-Origin', '*')
+  res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin')
+  next()
+}, express.static('uploads/contracts'))
+
 // Rutas para usuarios
 app.use('/api/users', usersRouter)
 // Rutas para pacientes

@@ -30,7 +30,7 @@ const validateEndodonticTreatmentData = [
   body('descripcion').optional().isString().trim().escape().withMessage('La descripción debe ser un texto válido'),
   body('diagnostico').optional().isString().trim().escape().withMessage('El diagnóstico debe ser un texto válido'),
   body('tratamiento').optional().isString().trim().escape().withMessage('El tratamiento debe ser un texto válido')
-];
+]
 
 // Route to get all endodontic treatments
 endodonticTreatmentRouter.get('/', async (req, res) => {

@@ -26,7 +26,7 @@ const upload = multer({ storage })
 // Middleware para validar y sanitizar los datos de ortodoncia
 const validateOrtodonciaData = [
   body('paciente').isMongoId().withMessage('El ID del paciente debe ser un ID válido de MongoDB'),
-  body('diagnosticoOrtodoncia').isString().trim().escape().notEmpty().withMessage('El diagnóstico de ortodoncia es obligatorio y debe ser un texto válido'),
+  body('diagnostico').isString().trim().escape().notEmpty().withMessage('El diagnóstico de ortodoncia es obligatorio y debe ser un texto válido'),
   body('comentarios').optional().isString().trim().escape().withMessage('Los comentarios deben ser un texto válido')
 ];
 
@@ -107,7 +107,8 @@ ortodonciaRouter.post('/', upload.fields([
   }
 
   try {
-    const { paciente, diagnosticoOrtodoncia, comentarios } = req.body;
+    // const { paciente, diagnosticoOrtodoncia, comentarios } = req.body;
+    const { paciente, ...ortodonciaData } = req.body
     const archivo1 = req.files && req.files.archivo1 ? req.files.archivo1[0].filename : null;
     const archivo2 = req.files && req.files.archivo2 ? req.files.archivo2[0].filename : null;
     const archivo3 = req.files && req.files.archivo3 ? req.files.archivo3[0].filename : null;
@@ -124,12 +125,11 @@ ortodonciaRouter.post('/', upload.fields([
 
     const ortodoncia = new Ortodoncia({
       paciente,
-      diagnosticoOrtodoncia,
-      comentarios,
+      ...ortodonciaData,
       archivo1,
       archivo2,
       archivo3
-    });
+    })
 
     const savedOrtodoncia = await ortodoncia.save();
     existingPatient.ortodoncia = savedOrtodoncia._id;
@@ -162,7 +162,8 @@ ortodonciaRouter.put('/:id', upload.fields([
 
   try {
     const ortodonciaId = req.params.id;
-    const { paciente, diagnosticoOrtodoncia, comentarios } = req.body;
+    const { paciente, ...ortodonciaData } = req.body
+    // const { paciente, diagnosticoOrtodoncia, comentarios } = req.body;
     const archivo1 = req.files && req.files.archivo1 ? req.files.archivo1[0].filename : null;
     const archivo2 = req.files && req.files.archivo2 ? req.files.archivo2[0].filename : null;
     const archivo3 = req.files && req.files.archivo3 ? req.files.archivo3[0].filename : null;
@@ -180,11 +181,12 @@ ortodonciaRouter.put('/:id', upload.fields([
       existingOrtodoncia.paciente = paciente;
     }
 
-    if (diagnosticoOrtodoncia) existingOrtodoncia.diagnosticoOrtodoncia = diagnosticoOrtodoncia;
-    if (comentarios) existingOrtodoncia.comentarios = comentarios;
+    // if (diagnosticoOrtodoncia) existingOrtodoncia.diagnosticoOrtodoncia = diagnosticoOrtodoncia;
+    // if (comentarios) existingOrtodoncia.comentarios = comentarios;
     if (archivo1) existingOrtodoncia.archivo1 = archivo1;
     if (archivo2) existingOrtodoncia.archivo2 = archivo2;
     if (archivo3) existingOrtodoncia.archivo3 = archivo3;
+    Object.assign(existingOrtodoncia, ortodonciaData)
 
     const updatedOrtodoncia = await existingOrtodoncia.save();
 

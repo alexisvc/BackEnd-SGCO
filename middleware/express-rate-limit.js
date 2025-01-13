@@ -3,7 +3,7 @@ const rateLimit = require('express-rate-limit')
 // Configuración del límite de solicitudes
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutos
-  max: 100, // Límite de 100 solicitudes por IP
+  max: 250, // Límite de 250 solicitudes por IP
   message: {
     status: 429,
     error: 'Demasiadas solicitudes. Por favor, inténtalo más tarde.'

@@ -26,8 +26,8 @@ const upload = multer({ storage })
 // Middleware para validar y sanitizar los datos de rehabilitación oral
 const validateRehabilitacionOralData = [
   body('paciente').isMongoId().withMessage('El ID del paciente debe ser un ID válido de MongoDB'),
-  body('diagnostico').isString().trim().escape().notEmpty().withMessage('El diagnóstico es obligatorio y debe ser un texto válido'),
-  body('comentarios').optional().isString().trim().escape().withMessage('Los comentarios deben ser un texto válido')
+  //body('diagnostico').isString().trim().escape().notEmpty().withMessage('El diagnóstico es obligatorio y debe ser un texto válido'),
+  //body('comentarios').optional().isString().trim().escape().withMessage('Los comentarios deben ser un texto válido')
 ];
 
 // Ruta para obtener todas las rehabilitaciones orales
@@ -110,7 +110,8 @@ rehabilitacionOralRouter.post('/', upload.fields([
   }
 
   try {
-    const { paciente, diagnostico, comentarios } = req.body;
+    const { paciente, ...rehabilitacionOralData } = req.body
+    // const { paciente, diagnostico, comentarios } = req.body;
     const archivo1 = req.files && req.files.archivo1 ? req.files.archivo1[0].filename : null;
     const archivo2 = req.files && req.files.archivo2 ? req.files.archivo2[0].filename : null;
     const archivo3 = req.files && req.files.archivo3 ? req.files.archivo3[0].filename : null;
@@ -127,12 +128,11 @@ rehabilitacionOralRouter.post('/', upload.fields([
 
     const rehabilitacionOral = new RehabilitacionOral({
       paciente,
-      diagnostico,
-      comentarios,
+      ...rehabilitacionOralData,
       archivo1,
       archivo2,
       archivo3
-    });
+    })
 
     const savedRehabilitacionOral = await rehabilitacionOral.save();
     existingPatient.rehabilitacionOral = savedRehabilitacionOral._id;
@@ -165,14 +165,15 @@ rehabilitacionOralRouter.put('/:id', upload.fields([
 
   try {
     const rehabilitacionOralId = req.params.id;
-    const { paciente, diagnostico, comentarios } = req.body;
+    const { paciente, ...rehabilitacionOralData } = req.body
     const archivo1 = req.files && req.files.archivo1 ? req.files.archivo1[0].filename : null;
     const archivo2 = req.files && req.files.archivo2 ? req.files.archivo2[0].filename : null;
     const archivo3 = req.files && req.files.archivo3 ? req.files.archivo3[0].filename : null;
 
-    const existingRehabilitacionOral = await RehabilitacionOral.findById(rehabilitacionOralId);
+    const existingRehabilitacionOral = await RehabilitacionOral.findById(rehabilitacionOralId)
+
     if (!existingRehabilitacionOral) {
-      return res.status(404).json({ error: 'Rehabilitación oral no encontrada' });
+      return res.status(404).json({ error: 'Rehabilitacion Oral not found' })
     }
 
     if (paciente) {
@@ -180,14 +181,16 @@ rehabilitacionOralRouter.put('/:id', upload.fields([
       if (!existingPatient) {
         return res.status(404).json({ error: 'Paciente no encontrado' });
       }
-      existingRehabilitacionOral.paciente = paciente;
+      existingRehabilitacionOral.paciente = paciente
     }
 
     if (archivo1) existingRehabilitacionOral.archivo1 = archivo1;
     if (archivo2) existingRehabilitacionOral.archivo2 = archivo2;
     if (archivo3) existingRehabilitacionOral.archivo3 = archivo3;
-    existingRehabilitacionOral.diagnostico = diagnostico;
-    existingRehabilitacionOral.comentarios = comentarios;
+
+    Object.assign(existingRehabilitacionOral, rehabilitacionOralData)
+
+ 
 
     const updatedRehabilitacionOral = await existingRehabilitacionOral.save();
 
