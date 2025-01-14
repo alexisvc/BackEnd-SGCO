@@ -12,9 +12,9 @@ disfuncionMandibularRouter.use(authMiddleware)
 // Middleware para validar y sanitizar los datos de disfunción mandibular
 const validateDisfuncionMandibularData = [
   body('paciente').isMongoId().withMessage('El ID del paciente debe ser un ID válido de MongoDB'),
-  body('sintomas').optional().isString().trim().escape().withMessage('Los síntomas deben ser un texto válido'),
-  body('diagnostico').optional().isString().trim().escape().withMessage('El diagnóstico debe ser un texto válido'),
-  body('tratamiento').optional().isString().trim().escape().withMessage('El tratamiento debe ser un texto válido')
+  //body('sintomas').optional().isString().trim().escape().withMessage('Los síntomas deben ser un texto válido'),
+  //body('diagnostico').optional().isString().trim().escape().withMessage('El diagnóstico debe ser un texto válido'),
+  //body('tratamiento').optional().isString().trim().escape().withMessage('El tratamiento debe ser un texto válido')
 ];
 
 // Ruta para obtener todas las disfunciones mandibulares
