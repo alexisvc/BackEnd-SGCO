@@ -1,5 +1,5 @@
 const budgetsRouter = require('express').Router()
-const { body, validationResult } = require('express-validator');
+const { body, validationResult } = require('express-validator')
 const Budget = require('../models/Budget')
 const TreatmentPlan = require('../models/TreatmentPlan')
 
@@ -17,12 +17,10 @@ const validateBudgetData = [
   body('fases.*.procedimientos.*.numeroPiezas').isInt({ gt: 0 }).withMessage('El número de piezas debe ser un entero positivo'),
   body('fases.*.procedimientos.*.costoPorUnidad').isFloat({ min: 0 }).withMessage('El costo por unidad debe ser un número positivo'),
   body('treatmentPlan').optional().isMongoId().withMessage('El ID del plan de tratamiento debe ser un ID válido de MongoDB')
-];
+]
 
 // Aplica el middleware a todas las rutas
 budgetsRouter.use(authMiddleware)
-
-
 
 // Obtener todos los presupuestos
 budgetsRouter.get('/', async (req, res) => {
@@ -91,45 +89,45 @@ budgetsRouter.get('/treatment/:treatmentPlanId', async (req, res) => {
 
 // Ruta para crear un nuevo presupuesto
 budgetsRouter.post('/', validateBudgetData, async (req, res) => {
-  const errors = validationResult(req);
+  const errors = validationResult(req)
   if (!errors.isEmpty()) {
-    return res.status(400).json({ errors: errors.array() });
+    return res.status(400).json({ errors: errors.array() })
   }
 
   try {
-    const { paciente, especialidad, fases, treatmentPlan } = req.body;
+    const { paciente, especialidad, fases, treatmentPlan } = req.body
 
     // Verificar si ya existe un presupuesto para el plan de tratamiento
     if (treatmentPlan) {
-      const existingBudget = await Budget.findOne({ treatmentPlan });
+      const existingBudget = await Budget.findOne({ treatmentPlan })
       if (existingBudget) {
-        return res.status(400).json({ error: 'Ya existe un presupuesto para esta planificación' });
+        return res.status(400).json({ error: 'Ya existe un presupuesto para esta planificación' })
       }
     }
 
-    const newBudget = new Budget({ paciente, especialidad, fases, treatmentPlan });
-    const savedBudget = await newBudget.save();
+    const newBudget = new Budget({ paciente, especialidad, fases, treatmentPlan })
+    const savedBudget = await newBudget.save()
 
     // Si viene de una planificación, actualizar la planificación
     if (treatmentPlan) {
-      const treatment = await TreatmentPlan.findById(treatmentPlan);
+      const treatment = await TreatmentPlan.findById(treatmentPlan)
       if (!treatment) {
-        return res.status(404).json({ error: 'Planificación no encontrada' });
+        return res.status(404).json({ error: 'Planificación no encontrada' })
       }
-      treatment.budget = savedBudget._id;
-      await treatment.save();
+      treatment.budget = savedBudget._id
+      await treatment.save()
     }
 
     const populatedBudget = await Budget.findById(savedBudget._id)
       .populate('paciente', 'nombrePaciente numeroCedula')
-      .populate('treatmentPlan');
+      .populate('treatmentPlan')
 
-    res.status(201).json(populatedBudget);
+    res.status(201).json(populatedBudget)
   } catch (error) {
-    console.error('Error al crear el presupuesto:', error);
-    res.status(500).json({ error: 'Error al crear el presupuesto' });
+    console.error('Error al crear el presupuesto:', error)
+    res.status(500).json({ error: 'Error al crear el presupuesto' })
   }
-});
+})
 
 // Agregar un nuevo procedimiento a una fase
 budgetsRouter.post('/:id/fase/:faseIndex/procedimiento', async (req, res) => {
@@ -254,32 +252,32 @@ budgetsRouter.patch('/:id/fase/:faseIndex/procedimientos', async (req, res) => {
 
 // Ruta para actualizar un presupuesto existente
 budgetsRouter.put('/:id', validateBudgetData, async (req, res) => {
-  const errors = validationResult(req);
+  const errors = validationResult(req)
   if (!errors.isEmpty()) {
-    return res.status(400).json({ errors: errors.array() });
+    return res.status(400).json({ errors: errors.array() })
   }
 
   try {
-    const { id } = req.params;
-    const budgetData = req.body;
+    const { id } = req.params
+    const budgetData = req.body
 
     const updatedBudget = await Budget.findByIdAndUpdate(
       id,
       budgetData,
       { new: true, runValidators: true }
     ).populate('paciente', 'nombrePaciente numeroCedula')
-     .populate('treatmentPlan');
+      .populate('treatmentPlan')
 
     if (!updatedBudget) {
-      return res.status(404).json({ error: 'Presupuesto no encontrado' });
+      return res.status(404).json({ error: 'Presupuesto no encontrado' })
     }
 
-    res.json(updatedBudget);
+    res.json(updatedBudget)
   } catch (error) {
-    console.error('Error al actualizar el presupuesto:', error);
-    res.status(500).json({ error: 'Error al actualizar el presupuesto' });
+    console.error('Error al actualizar el presupuesto:', error)
+    res.status(500).json({ error: 'Error al actualizar el presupuesto' })
   }
-});
+})
 
 /// Eliminar un presupuesto
 

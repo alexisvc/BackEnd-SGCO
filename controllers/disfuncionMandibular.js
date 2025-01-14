@@ -1,5 +1,5 @@
 const express = require('express')
-const { body, validationResult } = require('express-validator');
+const { body, validationResult } = require('express-validator')
 const disfuncionMandibularRouter = express.Router()
 const DisfuncionMandibular = require('../models/DisfuncionMandibular')
 const Patient = require('../models/Patient')
@@ -15,7 +15,7 @@ const validateDisfuncionMandibularData = [
   body('sintomas').optional().isString().trim().escape().withMessage('Los síntomas deben ser un texto válido'),
   body('diagnostico').optional().isString().trim().escape().withMessage('El diagnóstico debe ser un texto válido'),
   body('tratamiento').optional().isString().trim().escape().withMessage('El tratamiento debe ser un texto válido')
-];
+]
 
 // Ruta para obtener todas las disfunciones mandibulares
 disfuncionMandibularRouter.get('/', async (req, res) => {
@@ -64,60 +64,60 @@ disfuncionMandibularRouter.get('/patient/:patientId', async (req, res) => {
 
 // Ruta para crear una nueva disfunción mandibular
 disfuncionMandibularRouter.post('/', validateDisfuncionMandibularData, async (req, res) => {
-  const errors = validationResult(req);
+  const errors = validationResult(req)
   if (!errors.isEmpty()) {
-    return res.status(400).json({ errors: errors.array() });
+    return res.status(400).json({ errors: errors.array() })
   }
 
   try {
-    const { paciente, ...disfuncionMandibularData } = req.body;
+    const { paciente, ...disfuncionMandibularData } = req.body
 
     // Validate that the patient exists
-    const existingPatient = await Patient.findById(paciente);
+    const existingPatient = await Patient.findById(paciente)
     if (!existingPatient) {
-      return res.status(400).json({ error: 'Patient not found' });
+      return res.status(400).json({ error: 'Patient not found' })
     }
 
     // Check if the patient already has a disfuncion mandibular record
-    const existingDisfuncionMandibular = await DisfuncionMandibular.findOne({ paciente });
+    const existingDisfuncionMandibular = await DisfuncionMandibular.findOne({ paciente })
     if (existingDisfuncionMandibular) {
-      return res.status(400).json({ error: 'Patient already has a DisfuncionMandibular record' });
+      return res.status(400).json({ error: 'Patient already has a DisfuncionMandibular record' })
     }
 
     const disfuncionMandibular = new DisfuncionMandibular({
       ...disfuncionMandibularData,
       paciente
-    });
+    })
 
-    const savedDisfuncionMandibular = await disfuncionMandibular.save();
+    const savedDisfuncionMandibular = await disfuncionMandibular.save()
 
     // Add the disfuncion mandibular reference to the patient
-    existingPatient.disfuncionMandibular = savedDisfuncionMandibular._id;
-    await existingPatient.save();
+    existingPatient.disfuncionMandibular = savedDisfuncionMandibular._id
+    await existingPatient.save()
 
-    res.status(201).json(savedDisfuncionMandibular);
+    res.status(201).json(savedDisfuncionMandibular)
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    console.error(error)
+    res.status(500).json({ error: 'Internal Server Error' })
   }
-});
+})
 
 // Ruta para actualizar una disfunción mandibular por su ID
 disfuncionMandibularRouter.put('/:id', validateDisfuncionMandibularData, async (req, res) => {
-  const errors = validationResult(req);
+  const errors = validationResult(req)
   if (!errors.isEmpty()) {
-    return res.status(400).json({ errors: errors.array() });
+    return res.status(400).json({ errors: errors.array() })
   }
 
   try {
-    const disfuncionMandibularId = req.params.id;
-    const { paciente, ...disfuncionMandibularData } = req.body;
+    const disfuncionMandibularId = req.params.id
+    const { paciente, ...disfuncionMandibularData } = req.body
 
     // Validate that the patient exists if updating the patient field
     if (paciente) {
-      const existingPatient = await Patient.findById(paciente);
+      const existingPatient = await Patient.findById(paciente)
       if (!existingPatient) {
-        return res.status(400).json({ error: 'Patient not found' });
+        return res.status(400).json({ error: 'Patient not found' })
       }
     }
 
@@ -125,28 +125,30 @@ disfuncionMandibularRouter.put('/:id', validateDisfuncionMandibularData, async (
       disfuncionMandibularId,
       { paciente, ...disfuncionMandibularData },
       { new: true, runValidators: true }
-    );
+    )
 
     if (!updatedDisfuncionMandibular) {
-      return res.status(404).json({ error: 'DisfuncionMandibular not found' });
+      return res.status(404).json({ error: 'DisfuncionMandibular not found' })
     }
 
     // If patient is being updated, ensure unique reference
     if (paciente) {
+      // Eliminar la referencia anterior asignando null
       await Patient.findByIdAndUpdate(updatedDisfuncionMandibular.paciente, {
-        $pull: { disfuncionMandibular: disfuncionMandibularId }
-      });
-      const existingPatient = await Patient.findById(paciente);
-      existingPatient.disfuncionMandibular = updatedDisfuncionMandibular._id;
-      await existingPatient.save();
+        disfuncionMandibular: null
+      })
+      // Actualizar el paciente con la nueva referencia
+      const existingPatient = await Patient.findById(paciente)
+      existingPatient.disfuncionMandibular = updatedDisfuncionMandibular._id
+      await existingPatient.save()
     }
 
-    res.json(updatedDisfuncionMandibular);
+    res.json(updatedDisfuncionMandibular)
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    console.error(error)
+    res.status(500).json({ error: 'Internal Server Error' })
   }
-});
+})
 
 // Ruta para eliminar una disfunción mandibular por su ID
 disfuncionMandibularRouter.delete('/:id', async (req, res) => {

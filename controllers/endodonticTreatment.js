@@ -1,5 +1,5 @@
 const express = require('express')
-const { body, validationResult } = require('express-validator');
+const { body, validationResult } = require('express-validator')
 const endodonticTreatmentRouter = express.Router()
 const EndodonticTreatment = require('../models/EndodonticTreatment')
 const Patient = require('../models/Patient')
@@ -95,19 +95,19 @@ endodonticTreatmentRouter.get('/patient/:patientId', async (req, res) => {
 
 // Ruta para crear un nuevo tratamiento de endodoncia
 endodonticTreatmentRouter.post('/', upload.fields([{ name: 'archivo1', maxCount: 1 }, { name: 'archivo2', maxCount: 1 }]), validateEndodonticTreatmentData, async (req, res) => {
-  const errors = validationResult(req);
+  const errors = validationResult(req)
   if (!errors.isEmpty()) {
-    return res.status(400).json({ errors: errors.array() });
+    return res.status(400).json({ errors: errors.array() })
   }
 
   try {
-    const { paciente, ...endodonticTreatmentData } = req.body;
-    const archivo1 = req.files && req.files.archivo1 ? req.files.archivo1[0].filename : null;
-    const archivo2 = req.files && req.files.archivo2 ? req.files.archivo2[0].filename : null;
+    const { paciente, ...endodonticTreatmentData } = req.body
+    const archivo1 = req.files && req.files.archivo1 ? req.files.archivo1[0].filename : null
+    const archivo2 = req.files && req.files.archivo2 ? req.files.archivo2[0].filename : null
 
-    const existingPatient = await Patient.findById(paciente);
+    const existingPatient = await Patient.findById(paciente)
     if (!existingPatient) {
-      return res.status(404).json({ error: 'Patient not found' });
+      return res.status(404).json({ error: 'Patient not found' })
     }
 
     const endodonticTreatment = new EndodonticTreatment({
@@ -115,70 +115,70 @@ endodonticTreatmentRouter.post('/', upload.fields([{ name: 'archivo1', maxCount:
       ...endodonticTreatmentData,
       archivo1,
       archivo2
-    });
+    })
 
-    const savedEndodonticTreatment = await endodonticTreatment.save();
+    const savedEndodonticTreatment = await endodonticTreatment.save()
 
-    existingPatient.endodoncia.push(savedEndodonticTreatment._id);
-    await existingPatient.save();
+    existingPatient.endodoncia.push(savedEndodonticTreatment._id)
+    await existingPatient.save()
 
     const savedEndodonticTreatmentWithFileUrl = {
       ...savedEndodonticTreatment._doc,
       archivo1Url: archivo1 ? `${req.protocol}://${req.get('host')}/uploads/${savedEndodonticTreatment.archivo1}` : null,
       archivo2Url: archivo2 ? `${req.protocol}://${req.get('host')}/uploads/${savedEndodonticTreatment.archivo2}` : null
-    };
+    }
 
-    res.status(201).json(savedEndodonticTreatmentWithFileUrl);
+    res.status(201).json(savedEndodonticTreatmentWithFileUrl)
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    console.error(error)
+    res.status(500).json({ error: 'Internal Server Error' })
   }
-});
+})
 
 // Ruta para actualizar un tratamiento de endodoncia por su ID
 endodonticTreatmentRouter.put('/:id', upload.fields([{ name: 'archivo1', maxCount: 1 }, { name: 'archivo2', maxCount: 1 }]), validateEndodonticTreatmentData, async (req, res) => {
-  const errors = validationResult(req);
+  const errors = validationResult(req)
   if (!errors.isEmpty()) {
-    return res.status(400).json({ errors: errors.array() });
+    return res.status(400).json({ errors: errors.array() })
   }
 
   try {
-    const endodonticTreatmentId = req.params.id;
-    const { paciente, ...endodonticTreatmentData } = req.body;
-    const archivo1 = req.files && req.files.archivo1 ? req.files.archivo1[0].filename : null;
-    const archivo2 = req.files && req.files.archivo2 ? req.files.archivo2[0].filename : null;
+    const endodonticTreatmentId = req.params.id
+    const { paciente, ...endodonticTreatmentData } = req.body
+    const archivo1 = req.files && req.files.archivo1 ? req.files.archivo1[0].filename : null
+    const archivo2 = req.files && req.files.archivo2 ? req.files.archivo2[0].filename : null
 
-    const existingEndodonticTreatment = await EndodonticTreatment.findById(endodonticTreatmentId);
+    const existingEndodonticTreatment = await EndodonticTreatment.findById(endodonticTreatmentId)
     if (!existingEndodonticTreatment) {
-      return res.status(404).json({ error: 'Endodontic treatment not found' });
+      return res.status(404).json({ error: 'Endodontic treatment not found' })
     }
 
     if (paciente) {
-      const existingPatient = await Patient.findById(paciente);
+      const existingPatient = await Patient.findById(paciente)
       if (!existingPatient) {
-        return res.status(404).json({ error: 'Patient not found' });
+        return res.status(404).json({ error: 'Patient not found' })
       }
-      existingEndodonticTreatment.paciente = paciente;
+      existingEndodonticTreatment.paciente = paciente
     }
 
-    if (archivo1) existingEndodonticTreatment.archivo1 = archivo1;
-    if (archivo2) existingEndodonticTreatment.archivo2 = archivo2;
-    Object.assign(existingEndodonticTreatment, endodonticTreatmentData);
+    if (archivo1) existingEndodonticTreatment.archivo1 = archivo1
+    if (archivo2) existingEndodonticTreatment.archivo2 = archivo2
+    Object.assign(existingEndodonticTreatment, endodonticTreatmentData)
 
-    const updatedEndodonticTreatment = await existingEndodonticTreatment.save();
+    const updatedEndodonticTreatment = await existingEndodonticTreatment.save()
 
     const updatedEndodonticTreatmentWithFileUrl = {
       ...updatedEndodonticTreatment._doc,
       archivo1Url: archivo1 ? `${req.protocol}://${req.get('host')}/uploads/${updatedEndodonticTreatment.archivo1}` : null,
       archivo2Url: archivo2 ? `${req.protocol}://${req.get('host')}/uploads/${updatedEndodonticTreatment.archivo2}` : null
-    };
+    }
 
-    res.json(updatedEndodonticTreatmentWithFileUrl);
+    res.json(updatedEndodonticTreatmentWithFileUrl)
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    console.error(error)
+    res.status(500).json({ error: 'Internal Server Error' })
   }
-});
+})
 
 // Ruta para eliminar un tratamiento de endodoncia por su ID
 endodonticTreatmentRouter.delete('/:id', async (req, res) => {

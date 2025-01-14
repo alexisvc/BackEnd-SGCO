@@ -1,5 +1,5 @@
 const express = require('express')
-const { body, param, validationResult } = require('express-validator');
+const { body, param, validationResult } = require('express-validator')
 const periodonciaRouter = express.Router()
 const Periodoncia = require('../models/Periodoncia')
 const Patient = require('../models/Patient')
@@ -28,7 +28,7 @@ const validatePeriodonciaData = [
   body('paciente').isMongoId().withMessage('El ID del paciente debe ser un ID válido de MongoDB'),
   body('diagnostico').isString().trim().escape().notEmpty().withMessage('El diagnóstico es obligatorio y debe ser un texto válido'),
   body('comentarios').optional().isString().trim().escape().withMessage('Los comentarios deben ser un texto válido')
-];
+]
 
 // Obtener todas las periodoncias
 periodonciaRouter.get('/', async (req, res) => {
@@ -97,24 +97,24 @@ periodonciaRouter.post('/', upload.fields([
   { name: 'archivo1', maxCount: 1 },
   { name: 'archivo2', maxCount: 1 }
 ]), validatePeriodonciaData, async (req, res) => {
-  const errors = validationResult(req);
+  const errors = validationResult(req)
   if (!errors.isEmpty()) {
-    return res.status(400).json({ errors: errors.array() });
+    return res.status(400).json({ errors: errors.array() })
   }
 
   try {
-    const { paciente, diagnostico, comentarios } = req.body;
-    const archivo1 = req.files && req.files.archivo1 ? req.files.archivo1[0].filename : null;
-    const archivo2 = req.files && req.files.archivo2 ? req.files.archivo2[0].filename : null;
+    const { paciente, diagnostico, comentarios } = req.body
+    const archivo1 = req.files && req.files.archivo1 ? req.files.archivo1[0].filename : null
+    const archivo2 = req.files && req.files.archivo2 ? req.files.archivo2[0].filename : null
 
-    const existingPatient = await Patient.findById(paciente);
+    const existingPatient = await Patient.findById(paciente)
     if (!existingPatient) {
-      return res.status(404).json({ error: 'Paciente no encontrado' });
+      return res.status(404).json({ error: 'Paciente no encontrado' })
     }
 
-    const existingPeriodoncia = await Periodoncia.findOne({ paciente });
+    const existingPeriodoncia = await Periodoncia.findOne({ paciente })
     if (existingPeriodoncia) {
-      return res.status(400).json({ error: 'El paciente ya tiene un registro de periodoncia' });
+      return res.status(400).json({ error: 'El paciente ya tiene un registro de periodoncia' })
     }
 
     const periodoncia = new Periodoncia({
@@ -123,73 +123,73 @@ periodonciaRouter.post('/', upload.fields([
       comentarios,
       archivo1,
       archivo2
-    });
+    })
 
-    const savedPeriodoncia = await periodoncia.save();
-    existingPatient.periodoncia = savedPeriodoncia._id;
-    await existingPatient.save();
+    const savedPeriodoncia = await periodoncia.save()
+    existingPatient.periodoncia = savedPeriodoncia._id
+    await existingPatient.save()
 
     const savedPeriodonciaWithFileUrl = {
       ...savedPeriodoncia._doc,
       archivo1Url: archivo1 ? `${req.protocol}://${req.get('host')}/uploads/${savedPeriodoncia.archivo1}` : null,
       archivo2Url: archivo2 ? `${req.protocol}://${req.get('host')}/uploads/${savedPeriodoncia.archivo2}` : null
-    };
+    }
 
-    res.status(201).json(savedPeriodonciaWithFileUrl);
+    res.status(201).json(savedPeriodonciaWithFileUrl)
   } catch (error) {
-    console.error('Error al registrar periodoncia:', error);
-    res.status(500).json({ error: 'Error interno del servidor' });
+    console.error('Error al registrar periodoncia:', error)
+    res.status(500).json({ error: 'Error interno del servidor' })
   }
-});
+})
 
 // Ruta para actualizar una periodoncia por su ID
 periodonciaRouter.put('/:id', upload.fields([
   { name: 'archivo1', maxCount: 1 },
   { name: 'archivo2', maxCount: 1 }
 ]), validatePeriodonciaData, async (req, res) => {
-  const errors = validationResult(req);
+  const errors = validationResult(req)
   if (!errors.isEmpty()) {
-    return res.status(400).json({ errors: errors.array() });
+    return res.status(400).json({ errors: errors.array() })
   }
 
   try {
-    const periodonciaId = req.params.id;
-    const { paciente, diagnostico, comentarios } = req.body;
-    const archivo1 = req.files && req.files.archivo1 ? req.files.archivo1[0].filename : null;
-    const archivo2 = req.files && req.files.archivo2 ? req.files.archivo2[0].filename : null;
+    const periodonciaId = req.params.id
+    const { paciente, diagnostico, comentarios } = req.body
+    const archivo1 = req.files && req.files.archivo1 ? req.files.archivo1[0].filename : null
+    const archivo2 = req.files && req.files.archivo2 ? req.files.archivo2[0].filename : null
 
-    const existingPeriodoncia = await Periodoncia.findById(periodonciaId);
+    const existingPeriodoncia = await Periodoncia.findById(periodonciaId)
     if (!existingPeriodoncia) {
-      return res.status(404).json({ error: 'Periodoncia no encontrada' });
+      return res.status(404).json({ error: 'Periodoncia no encontrada' })
     }
 
     if (paciente) {
-      const existingPatient = await Patient.findById(paciente);
+      const existingPatient = await Patient.findById(paciente)
       if (!existingPatient) {
-        return res.status(404).json({ error: 'Paciente no encontrado' });
+        return res.status(404).json({ error: 'Paciente no encontrado' })
       }
-      existingPeriodoncia.paciente = paciente;
+      existingPeriodoncia.paciente = paciente
     }
 
-    if (archivo1) existingPeriodoncia.archivo1 = archivo1;
-    if (archivo2) existingPeriodoncia.archivo2 = archivo2;
-    existingPeriodoncia.diagnostico = diagnostico;
-    existingPeriodoncia.comentarios = comentarios;
+    if (archivo1) existingPeriodoncia.archivo1 = archivo1
+    if (archivo2) existingPeriodoncia.archivo2 = archivo2
+    existingPeriodoncia.diagnostico = diagnostico
+    existingPeriodoncia.comentarios = comentarios
 
-    const updatedPeriodoncia = await existingPeriodoncia.save();
+    const updatedPeriodoncia = await existingPeriodoncia.save()
 
     const updatedPeriodonciaWithFileUrl = {
       ...updatedPeriodoncia._doc,
       archivo1Url: archivo1 ? `${req.protocol}://${req.get('host')}/uploads/${updatedPeriodoncia.archivo1}` : null,
       archivo2Url: archivo2 ? `${req.protocol}://${req.get('host')}/uploads/${updatedPeriodoncia.archivo2}` : null
-    };
+    }
 
-    res.json(updatedPeriodonciaWithFileUrl);
+    res.json(updatedPeriodonciaWithFileUrl)
   } catch (error) {
-    console.error('Error al actualizar periodoncia:', error);
-    res.status(500).json({ error: 'Error interno del servidor' });
+    console.error('Error al actualizar periodoncia:', error)
+    res.status(500).json({ error: 'Error interno del servidor' })
   }
-});
+})
 
 // Eliminar una periodoncia por su ID
 periodonciaRouter.delete('/:id', async (req, res) => {

@@ -1,5 +1,5 @@
 const express = require('express')
-const { body, validationResult } = require('express-validator');
+const { body, validationResult } = require('express-validator')
 const ortodonciaRouter = express.Router()
 const Ortodoncia = require('../models/Ortodoncia')
 const Patient = require('../models/Patient')
@@ -28,7 +28,7 @@ const validateOrtodonciaData = [
   body('paciente').isMongoId().withMessage('El ID del paciente debe ser un ID válido de MongoDB'),
   body('diagnostico').isString().trim().escape().notEmpty().withMessage('El diagnóstico de ortodoncia es obligatorio y debe ser un texto válido'),
   body('comentarios').optional().isString().trim().escape().withMessage('Los comentarios deben ser un texto válido')
-];
+]
 
 // Obtener todas las ortodoncias
 ortodonciaRouter.get('/', async (req, res) => {
@@ -101,26 +101,26 @@ ortodonciaRouter.post('/', upload.fields([
   { name: 'archivo2', maxCount: 1 },
   { name: 'archivo3', maxCount: 1 }
 ]), validateOrtodonciaData, async (req, res) => {
-  const errors = validationResult(req);
+  const errors = validationResult(req)
   if (!errors.isEmpty()) {
-    return res.status(400).json({ errors: errors.array() });
+    return res.status(400).json({ errors: errors.array() })
   }
 
   try {
     // const { paciente, diagnosticoOrtodoncia, comentarios } = req.body;
     const { paciente, ...ortodonciaData } = req.body
-    const archivo1 = req.files && req.files.archivo1 ? req.files.archivo1[0].filename : null;
-    const archivo2 = req.files && req.files.archivo2 ? req.files.archivo2[0].filename : null;
-    const archivo3 = req.files && req.files.archivo3 ? req.files.archivo3[0].filename : null;
+    const archivo1 = req.files && req.files.archivo1 ? req.files.archivo1[0].filename : null
+    const archivo2 = req.files && req.files.archivo2 ? req.files.archivo2[0].filename : null
+    const archivo3 = req.files && req.files.archivo3 ? req.files.archivo3[0].filename : null
 
-    const existingPatient = await Patient.findById(paciente);
+    const existingPatient = await Patient.findById(paciente)
     if (!existingPatient) {
-      return res.status(404).json({ error: 'Paciente no encontrado' });
+      return res.status(404).json({ error: 'Paciente no encontrado' })
     }
 
-    const existingOrtodoncia = await Ortodoncia.findOne({ paciente });
+    const existingOrtodoncia = await Ortodoncia.findOne({ paciente })
     if (existingOrtodoncia) {
-      return res.status(400).json({ error: 'El paciente ya tiene un registro de ortodoncia' });
+      return res.status(400).json({ error: 'El paciente ya tiene un registro de ortodoncia' })
     }
 
     const ortodoncia = new Ortodoncia({
@@ -131,23 +131,23 @@ ortodonciaRouter.post('/', upload.fields([
       archivo3
     })
 
-    const savedOrtodoncia = await ortodoncia.save();
-    existingPatient.ortodoncia = savedOrtodoncia._id;
-    await existingPatient.save();
+    const savedOrtodoncia = await ortodoncia.save()
+    existingPatient.ortodoncia = savedOrtodoncia._id
+    await existingPatient.save()
 
     const savedOrtodonciaWithFileUrl = {
       ...savedOrtodoncia._doc,
       archivo1Url: archivo1 ? `${req.protocol}://${req.get('host')}/uploads/${savedOrtodoncia.archivo1}` : null,
       archivo2Url: archivo2 ? `${req.protocol}://${req.get('host')}/uploads/${savedOrtodoncia.archivo2}` : null,
       archivo3Url: archivo3 ? `${req.protocol}://${req.get('host')}/uploads/${savedOrtodoncia.archivo3}` : null
-    };
+    }
 
-    res.status(201).json(savedOrtodonciaWithFileUrl);
+    res.status(201).json(savedOrtodonciaWithFileUrl)
   } catch (error) {
-    console.error('Error al registrar ortodoncia:', error);
-    res.status(500).json({ error: 'Error interno del servidor' });
+    console.error('Error al registrar ortodoncia:', error)
+    res.status(500).json({ error: 'Error interno del servidor' })
   }
-});
+})
 
 // Ruta para actualizar una ortodoncia por su ID
 ortodonciaRouter.put('/:id', upload.fields([
@@ -155,54 +155,54 @@ ortodonciaRouter.put('/:id', upload.fields([
   { name: 'archivo2', maxCount: 1 },
   { name: 'archivo3', maxCount: 1 }
 ]), validateOrtodonciaData, async (req, res) => {
-  const errors = validationResult(req);
+  const errors = validationResult(req)
   if (!errors.isEmpty()) {
-    return res.status(400).json({ errors: errors.array() });
+    return res.status(400).json({ errors: errors.array() })
   }
 
   try {
-    const ortodonciaId = req.params.id;
+    const ortodonciaId = req.params.id
     const { paciente, ...ortodonciaData } = req.body
     // const { paciente, diagnosticoOrtodoncia, comentarios } = req.body;
-    const archivo1 = req.files && req.files.archivo1 ? req.files.archivo1[0].filename : null;
-    const archivo2 = req.files && req.files.archivo2 ? req.files.archivo2[0].filename : null;
-    const archivo3 = req.files && req.files.archivo3 ? req.files.archivo3[0].filename : null;
+    const archivo1 = req.files && req.files.archivo1 ? req.files.archivo1[0].filename : null
+    const archivo2 = req.files && req.files.archivo2 ? req.files.archivo2[0].filename : null
+    const archivo3 = req.files && req.files.archivo3 ? req.files.archivo3[0].filename : null
 
-    const existingOrtodoncia = await Ortodoncia.findById(ortodonciaId);
+    const existingOrtodoncia = await Ortodoncia.findById(ortodonciaId)
     if (!existingOrtodoncia) {
-      return res.status(404).json({ error: 'Ortodoncia no encontrada' });
+      return res.status(404).json({ error: 'Ortodoncia no encontrada' })
     }
 
     if (paciente) {
-      const existingPatient = await Patient.findById(paciente);
+      const existingPatient = await Patient.findById(paciente)
       if (!existingPatient) {
-        return res.status(404).json({ error: 'Paciente no encontrado' });
+        return res.status(404).json({ error: 'Paciente no encontrado' })
       }
-      existingOrtodoncia.paciente = paciente;
+      existingOrtodoncia.paciente = paciente
     }
 
     // if (diagnosticoOrtodoncia) existingOrtodoncia.diagnosticoOrtodoncia = diagnosticoOrtodoncia;
     // if (comentarios) existingOrtodoncia.comentarios = comentarios;
-    if (archivo1) existingOrtodoncia.archivo1 = archivo1;
-    if (archivo2) existingOrtodoncia.archivo2 = archivo2;
-    if (archivo3) existingOrtodoncia.archivo3 = archivo3;
+    if (archivo1) existingOrtodoncia.archivo1 = archivo1
+    if (archivo2) existingOrtodoncia.archivo2 = archivo2
+    if (archivo3) existingOrtodoncia.archivo3 = archivo3
     Object.assign(existingOrtodoncia, ortodonciaData)
 
-    const updatedOrtodoncia = await existingOrtodoncia.save();
+    const updatedOrtodoncia = await existingOrtodoncia.save()
 
     const updatedOrtodonciaWithFileUrl = {
       ...updatedOrtodoncia._doc,
       archivo1Url: updatedOrtodoncia.archivo1 ? `${req.protocol}://${req.get('host')}/uploads/${updatedOrtodoncia.archivo1}` : null,
       archivo2Url: updatedOrtodoncia.archivo2 ? `${req.protocol}://${req.get('host')}/uploads/${updatedOrtodoncia.archivo2}` : null,
       archivo3Url: updatedOrtodoncia.archivo3 ? `${req.protocol}://${req.get('host')}/uploads/${updatedOrtodoncia.archivo3}` : null
-    };
+    }
 
-    res.json(updatedOrtodonciaWithFileUrl);
+    res.json(updatedOrtodonciaWithFileUrl)
   } catch (error) {
-    console.error('Error al actualizar ortodoncia:', error);
-    res.status(500).json({ error: 'Error interno del servidor' });
+    console.error('Error al actualizar ortodoncia:', error)
+    res.status(500).json({ error: 'Error interno del servidor' })
   }
-});
+})
 
 // Eliminar una ortodoncia por su ID
 ortodonciaRouter.delete('/:id', async (req, res) => {

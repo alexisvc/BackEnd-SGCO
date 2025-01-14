@@ -1,5 +1,5 @@
 const financialReportsRouter = require('express').Router()
-const { body, validationResult } = require('express-validator');
+const { body, validationResult } = require('express-validator')
 const FinancialReport = require('../models/FinancialReport')
 const Budget = require('../models/Budget')
 
@@ -14,7 +14,7 @@ const validateFinancialReportData = [
   body('monto').isFloat({ min: 0 }).withMessage('El monto debe ser un número positivo'),
   body('metodoPago').isString().trim().escape().withMessage('El método de pago es obligatorio y debe ser un texto válido'),
   body('conceptoPago').optional().isString().trim().escape().withMessage('El concepto de pago debe ser un texto válido')
-];
+]
 
 // Obtener todos los reportes financieros
 financialReportsRouter.get('/', async (req, res) => {
@@ -147,17 +147,17 @@ financialReportsRouter.get('/rango', async (req, res) => {
 
 // Ruta para registrar un nuevo ingreso
 financialReportsRouter.post('/', validateFinancialReportData, async (req, res) => {
-  const errors = validationResult(req);
+  const errors = validationResult(req)
   if (!errors.isEmpty()) {
-    return res.status(400).json({ errors: errors.array() });
+    return res.status(400).json({ errors: errors.array() })
   }
 
   try {
-    const { presupuesto, monto, metodoPago, conceptoPago } = req.body;
+    const { presupuesto, monto, metodoPago, conceptoPago } = req.body
 
-    const budgetExists = await Budget.findById(presupuesto);
+    const budgetExists = await Budget.findById(presupuesto)
     if (!budgetExists) {
-      return res.status(404).json({ error: 'Presupuesto no encontrado' });
+      return res.status(404).json({ error: 'Presupuesto no encontrado' })
     }
 
     const newReport = new FinancialReport({
@@ -167,20 +167,20 @@ financialReportsRouter.post('/', validateFinancialReportData, async (req, res) =
       metodoPago,
       conceptoPago,
       fecha: new Date()
-    });
+    })
 
-    const savedReport = await newReport.save();
+    const savedReport = await newReport.save()
 
     const populatedReport = await FinancialReport.findById(savedReport._id)
       .populate('paciente', 'nombrePaciente numeroCedula')
-      .populate('presupuesto', 'fecha especialidad totalGeneral');
+      .populate('presupuesto', 'fecha especialidad totalGeneral')
 
-    res.status(201).json(populatedReport);
+    res.status(201).json(populatedReport)
   } catch (error) {
-    console.error('Error al crear reporte financiero:', error);
-    res.status(500).json({ error: 'Error al crear reporte financiero' });
+    console.error('Error al crear reporte financiero:', error)
+    res.status(500).json({ error: 'Error al crear reporte financiero' })
   }
-});
+})
 
 // Eliminar un reporte financiero
 financialReportsRouter.delete('/:id', async (req, res) => {
