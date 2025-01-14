@@ -26,9 +26,9 @@ const upload = multer({ storage })
 // Middleware para validar y sanitizar los datos de periodoncia
 const validatePeriodonciaData = [
   body('paciente').isMongoId().withMessage('El ID del paciente debe ser un ID válido de MongoDB'),
-  body('diagnostico').isString().trim().escape().notEmpty().withMessage('El diagnóstico es obligatorio y debe ser un texto válido'),
-  body('comentarios').optional().isString().trim().escape().withMessage('Los comentarios deben ser un texto válido')
-]
+  // body('diagnostico').isString().trim().escape().notEmpty().withMessage('El diagnóstico es obligatorio y debe ser un texto válido'),
+  // body('comentarios').optional().isString().trim().escape().withMessage('Los comentarios deben ser un texto válido')
+];
 
 // Obtener todas las periodoncias
 periodonciaRouter.get('/', async (req, res) => {
@@ -103,9 +103,9 @@ periodonciaRouter.post('/', upload.fields([
   }
 
   try {
-    const { paciente, diagnostico, comentarios } = req.body
-    const archivo1 = req.files && req.files.archivo1 ? req.files.archivo1[0].filename : null
-    const archivo2 = req.files && req.files.archivo2 ? req.files.archivo2[0].filename : null
+    const { paciente, ...periodonciaData } = req.body
+    const archivo1 = req.files && req.files.archivo1 ? req.files.archivo1[0].filename : null;
+    const archivo2 = req.files && req.files.archivo2 ? req.files.archivo2[0].filename : null;
 
     const existingPatient = await Patient.findById(paciente)
     if (!existingPatient) {
@@ -119,8 +119,7 @@ periodonciaRouter.post('/', upload.fields([
 
     const periodoncia = new Periodoncia({
       paciente,
-      diagnostico,
-      comentarios,
+      ...periodonciaData,
       archivo1,
       archivo2
     })
@@ -153,10 +152,11 @@ periodonciaRouter.put('/:id', upload.fields([
   }
 
   try {
-    const periodonciaId = req.params.id
-    const { paciente, diagnostico, comentarios } = req.body
-    const archivo1 = req.files && req.files.archivo1 ? req.files.archivo1[0].filename : null
-    const archivo2 = req.files && req.files.archivo2 ? req.files.archivo2[0].filename : null
+    const periodonciaId = req.params.id;
+    // const { paciente, diagnostico, comentarios } = req.body;
+    const { paciente, ...periodonciaData } = req.body
+    const archivo1 = req.files && req.files.archivo1 ? req.files.archivo1[0].filename : null;
+    const archivo2 = req.files && req.files.archivo2 ? req.files.archivo2[0].filename : null;
 
     const existingPeriodoncia = await Periodoncia.findById(periodonciaId)
     if (!existingPeriodoncia) {
@@ -171,10 +171,9 @@ periodonciaRouter.put('/:id', upload.fields([
       existingPeriodoncia.paciente = paciente
     }
 
-    if (archivo1) existingPeriodoncia.archivo1 = archivo1
-    if (archivo2) existingPeriodoncia.archivo2 = archivo2
-    existingPeriodoncia.diagnostico = diagnostico
-    existingPeriodoncia.comentarios = comentarios
+    if (archivo1) existingPeriodoncia.archivo1 = archivo1;
+    if (archivo2) existingPeriodoncia.archivo2 = archivo2;
+    Object.assign(existingPeriodoncia, periodonciaData);
 
     const updatedPeriodoncia = await existingPeriodoncia.save()
 
