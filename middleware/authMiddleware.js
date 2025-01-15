@@ -21,7 +21,12 @@ const authMiddleware = (req, res, next) => {
     // Continua con la siguiente función
     next()
   } catch (error) {
-    // Maneja errores de validación del token
+    if (error.name === 'TokenExpiredError') {
+      // Responde específicamente cuando el token ha expirado
+      return res.status(401).json({ error: 'Token expired' })
+    }
+
+    // Maneja otros errores de validación del token
     console.error('Invalid token:', error.message)
     res.status(401).json({ error: 'Invalid or expired token' })
   }
