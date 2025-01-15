@@ -16,8 +16,8 @@ const evolucionOrtodonciaSchema = new mongoose.Schema({
   ortodoncia: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Ortodoncia',
-    required: true,
-    unique: true
+    required: true
+    // unique: true
   }
 })
 
